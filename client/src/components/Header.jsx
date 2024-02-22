@@ -1,7 +1,7 @@
 // Header.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logoImage from 'D:/CP/Projects/Airplane_ticketing/client/src/assets/tlogo.png'; // Import your logo image file
+import logoImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png'; // Import your logo image file
 
 const Header = ({ isLoggedIn, handleSignOut }) => {
   return (
@@ -20,7 +20,26 @@ const Header = ({ isLoggedIn, handleSignOut }) => {
       </div>
       <h1 style={{ color: 'black', fontWeight: 'bold', fontSize: '64px', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)', margin: '0', textAlign: 'center' }}>FlightForge</h1>
       <div style={{ display: 'flex' }}>
-        {isLoggedIn ? (
+        {!isLoggedIn ? (
+          <Link 
+            to="/signin" 
+            style={{
+              color: 'white', 
+              backgroundColor: '#800000', 
+              padding: '15px 20px', // Adjust padding here
+              marginRight: '10px', 
+              borderRadius: '5px',
+              cursor: 'pointer',
+              textDecoration: 'none', 
+              fontSize: '16px', 
+              transition: 'background-color 0.3s',
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#600000'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#800000'}
+          >
+            Sign In
+          </Link>
+        ) : (
           <>
             <Link 
               to="/userprofile" 
@@ -59,25 +78,6 @@ const Header = ({ isLoggedIn, handleSignOut }) => {
               Sign Out
             </span>
           </>
-        ) : (
-          <Link 
-            to="/signin" 
-            style={{
-              color: 'white', 
-              backgroundColor: '#800000', 
-              padding: '15px 20px', // Adjust padding here
-              marginRight: '10px', 
-              borderRadius: '5px',
-              cursor: 'pointer',
-              textDecoration: 'none', 
-              fontSize: '16px', 
-              transition: 'background-color 0.3s',
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#600000'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#800000'}
-          >
-            Sign In
-          </Link>
         )}
       </div>
     </div>

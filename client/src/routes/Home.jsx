@@ -4,37 +4,16 @@ import { useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import SearchRoute from '../components/SearchRoute';
 import RouteList from '../components/RouteList';
-import backgroundImage from 'D:/CP/Projects/Airplane_ticketing/client/src/assets/cover.png'; // Import your background image
+import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png'; // Import your background image
 
 const Home = () => {
     const location = useLocation();
-    const isLoggedIn = location.state && location.state.isLoggedIn;
-
-    const [userId, setUserId] = useState('');
-    const [password, setPassword] = useState('');
-
-    useEffect(() => {
-        // Check if cookie exists
-        const cookieValue = document.cookie;
-        if (cookieValue) {
-            const cookieData = cookieValue.split(';');
-            for (let data of cookieData) {
-                const [key, value] = data.trim().split('=');
-                if (key === 'userId') {
-                    setUserId(value);
-                } else if (key === 'password') {
-                    setPassword(value);
-                }
-            }
-        }
-    }, []);
+    const [isLoggedIn, setIsLoggedIn] = useState(location.state && location.state.isLoggedIn);
 
     const handleSignOut = () => {
         // Clear user ID and password from cookies
         document.cookie = 'userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = 'password=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        setUserId('');
-        setPassword('');
+        setIsLoggedIn(false);
     };
 
     return (

@@ -6,7 +6,6 @@ const port = process.env.PORT;
 const db = require("./db");
 const crypto = require('crypto');
 
-
 function sha256(inputString) {
   const hash = crypto.createHash('sha256');
   hash.update(inputString, 'utf-8');

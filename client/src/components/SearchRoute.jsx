@@ -9,6 +9,7 @@ const SearchRoute = () => {
   const [endAirport, setEndAirport] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [travelerCount, setTravelerCount] = useState(1);
+  const [ticketClass, setTicketClass] = useState('commercial'); // Default ticket class
   const { setRoutes } = useContext(RouteContext);
   const [airports, setAirports] = useState([]);
   const [startSuggestedAirports, setStartSuggestedAirports] = useState([]);
@@ -88,6 +89,7 @@ const SearchRoute = () => {
         end_airport_name: endAirport,
         date: selectedDate.toISOString(),
         traveler_count: travelerCount,
+        ticket_class: ticketClass, // Include ticket class in the request
       });
       setRoutes(response.data.data.Route);
     } catch (err) {
@@ -102,7 +104,7 @@ const SearchRoute = () => {
       borderRadius: '10px', 
       boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.75)',
       margin: '20px auto',
-      width: '80%'
+      width: '75%'
     }}>
       <form>
         <div className="form-row mb-3">
@@ -112,7 +114,7 @@ const SearchRoute = () => {
               value={startAirport}
               onChange={handleStartAirportChange}
               className="form-control"
-              placeholder="From (city name)"
+              placeholder="From"
               style={{ fontSize: '1.2rem' }} // Adjust height here
             />
             {showStartSuggestions && startSuggestedAirports.length > 0 && (
@@ -229,16 +231,37 @@ const SearchRoute = () => {
             )}
           </div>
         </div>
+        <div className="form-row mb-3" style={{ display: 'flex', alignItems: 'center' }}>
+  <div className="col" style={{ flex: '1' }}>
+    <select
+      value={ticketClass}
+      onChange={(e) => setTicketClass(e.target.value)}
+      className="form-control"
+      style={{ fontSize: '1rem' }} // Adjust font size if needed
+    >
+      <option value="commercial">Commercial</option>
+      <option value="business">Business</option>
+    </select>
+  </div>
+</div>
+
         <div className="form-row mb-3">
           <div className="col">
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              dateFormat="dd/MM/yyyy"
-              className="form-control"
-              placeholderText="Select Date"
-              style={{ fontSize: '1.2rem' }}
-            />
+            <div className="input-group">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
+                dateFormat="dd/MM/yyyy"
+                className="form-control"
+                placeholderText="Select Date"
+                style={{ fontSize: '1.2rem' }}
+              />
+              <div className="input-group-append">
+                <span className="input-group-text">
+                  <i className="fa fa-calendar"></i>
+                </span>
+              </div>
+            </div>
           </div>
           <div className="col">
             <input
