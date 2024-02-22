@@ -1,19 +1,17 @@
 // Home.jsx
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
 import Header from '../components/Header';
 import SearchRoute from '../components/SearchRoute';
 import RouteList from '../components/RouteList';
 import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png'; // Import your background image
 
 const Home = () => {
-    const location = useLocation();
-    const [isLoggedIn, setIsLoggedIn] = useState(location.state && location.state.isLoggedIn);
+    const [isLoggedIn, setIsLoggedIn] = useState(true); // Set initial state to true for logged-in
 
     const handleSignOut = () => {
-        // Clear user ID and password from cookies
-        document.cookie = 'userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        // Perform signout action here
         setIsLoggedIn(false);
+        // Redirect to home or perform any other action
     };
 
     return (

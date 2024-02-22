@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { Link } from 'react-router-dom'; // Import Link
+import RouteFinder from '../apis/RouteFinder';
+import defaultprofileimage from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png';
 
 const UserProfile = () => {
     const [userData, setUserData] = useState(null);
@@ -11,39 +13,68 @@ const UserProfile = () => {
 
     const fetchData = async () => {
         try {
-            const userId = localStorage.getItem('userId');
-            const password = localStorage.getItem('password');
-
+            const userId = 34;
+            const password = 'atikahoneybeeeofsakib';
+    
             if (!userId || !password) {
                 setError('User ID or password not found.');
                 return;
             }
-
-            const response = await axios.post('/api/v1/user/profiledata', { user_id: userId, password: password });
-            if (response.status === 200 && response.data.status === "success") {
-                setUserData(response.data.data.flightforge[0]); // Assuming user data is returned as an array with a single object
-            } else {
-                setError(response.data.data.flightforge);
-            }
+    
+            const response = await RouteFinder.post('/user/profiledata', {
+                id: userId,
+                password: password
+            });
+            console.log(response);
+            setUserData(response.data.data.user);
         } catch (error) {
-            console.error('Error fetching user data:', error);
+            console.error('Error fetching user data:');
             setError('Failed to fetch user data. Please try again.');
         }
-    };
+    };    
 
     return (
-        <div>
-            {userData ? (
-                <div>
-                    <h2>User Profile</h2>
-                    <p>User ID: {userData.id}</p>
-                    <p>First Name: {userData.first_name}</p>
-                    <p>Last Name: {userData.last_name}</p>
-                    {/* Add more user data fields as needed */}
+        <div className="container-fluid">
+            <div className="container mt-4">
+            <div className="cover-image">
+                <img src={defaultprofileimage} alt="naiii" style={{ width: '300px', marginRight: '10px', padding: '5%'}}/>
+                <div className="row-md-3">
+                        <div className="button-group">
+                            <Link to="/" className="btn btn-danger mb-2">Go to Home</Link>
+                            <div></div>
+                            <button className="btn btn-danger mb-2">Sign Out</button>
+                        </div>
+                    </div>
+            </div>
+                <div className="row">
+                    <div className="col-md-9">
+                        {userData ? (
+                            <div>
+                                <div className="user-info-group shadow p-3 mb-5 bg-white rounded">
+                                    <h4>User Info</h4>
+                                    <p>First Name: {userData.first_name}</p>
+                                    <p>Last Name: {userData.last_name}</p>
+                                    <p>Date of Birth: {userData.dateofbirth}</p>
+                                    <p>Age: {userData.age}</p>
+                                </div>
+                                <div className="contact-group shadow p-3 mb-5 bg-white rounded">
+                                    <h4>Contact</h4>
+                                    <p>Mobile Number: {userData.mobileno.join(', ')}</p>
+                                    <p>Gmail Account: {userData.email}</p>
+                                </div>
+                                <div className="address-group shadow p-3 mb-5 bg-white rounded">
+                                    <h4>Address</h4>
+                                    <p>City: {userData.city}</p>
+                                    <p>Country: {userData.country}</p>
+                                    <p>Zipcode: {userData.zipcode}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <p>{error || 'Loading...'}</p>
+                        )}
+                    </div>
                 </div>
-            ) : (
-                <p>{error}</p>
-            )}
+            </div>
         </div>
     );
 };

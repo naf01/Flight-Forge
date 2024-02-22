@@ -65,6 +65,14 @@ const SearchRoute = () => {
     handleAirportSelection(e, setEndAirport, setShowEndSuggestions);
   };
 
+  const handleClearStartAirport = () => {
+    setStartAirport('');
+  };
+
+  const handleClearEndAirport = () => {
+    setEndAirport('');
+  };
+
   const handleClickOutside = (e) => {
     if (startSelectRef.current && !startSelectRef.current.contains(e.target)) {
       setShowStartSuggestions(false);
@@ -109,14 +117,31 @@ const SearchRoute = () => {
       <form>
         <div className="form-row mb-3">
           <div className="col" ref={startSelectRef}>
-            <input
-              type="text"
-              value={startAirport}
-              onChange={handleStartAirportChange}
-              className="form-control"
-              placeholder="From"
-              style={{ fontSize: '1.2rem' }} // Adjust height here
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={startAirport}
+                onChange={handleStartAirportChange}
+                className="form-control"
+                placeholder="From"
+                style={{ fontSize: '1.2rem' }} // Adjust height here
+              />
+              {startAirport && (
+                <span
+                  className="clear-icon"
+                  onClick={handleClearStartAirport}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '10px',
+                    transform: 'translateY(-50%)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  &#10005;
+                </span>
+              )}
+            </div>
             {showStartSuggestions && startSuggestedAirports.length > 0 && (
               <select
                 className="form-control"
@@ -170,14 +195,31 @@ const SearchRoute = () => {
             )}
           </div>
           <div className="col" ref={endSelectRef}>
-            <input
-              type="text"
-              value={endAirport}
-              onChange={handleEndAirportChange}
-              className="form-control"
-              placeholder="To (city name)"
-              style={{ fontSize: '1.2rem' }} // Adjust height here
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={endAirport}
+                onChange={handleEndAirportChange}
+                className="form-control"
+                placeholder="To (city name)"
+                style={{ fontSize: '1.2rem' }} // Adjust height here
+              />
+              {endAirport && (
+                <span
+                  className="clear-icon"
+                  onClick={handleClearEndAirport}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '10px',
+                    transform: 'translateY(-50%)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  &#10005;
+                </span>
+              )}
+            </div>
             {showEndSuggestions && endSuggestedAirports.length > 0 && (
               <select
                 className="form-control"
@@ -232,18 +274,18 @@ const SearchRoute = () => {
           </div>
         </div>
         <div className="form-row mb-3" style={{ display: 'flex', alignItems: 'center' }}>
-  <div className="col" style={{ flex: '1' }}>
-    <select
-      value={ticketClass}
-      onChange={(e) => setTicketClass(e.target.value)}
-      className="form-control"
-      style={{ fontSize: '1rem' }} // Adjust font size if needed
-    >
-      <option value="commercial">Commercial</option>
-      <option value="business">Business</option>
-    </select>
-  </div>
-</div>
+          <div className="col" style={{ flex: '1' }}>
+            <select
+              value={ticketClass}
+              onChange={(e) => setTicketClass(e.target.value)}
+              className="form-control"
+              style={{ fontSize: '1rem' }} // Adjust font size if needed
+            >
+              <option value="commercial">Commercial</option>
+              <option value="business">Business</option>
+            </select>
+          </div>
+        </div>
 
         <div className="form-row mb-3">
           <div className="col">
@@ -275,9 +317,24 @@ const SearchRoute = () => {
           </div>
         </div>
         <div className="form-row d-flex justify-content-center">
-          <button onClick={handleSearch} className="btn btn-primary" style={{ backgroundColor: '#800000', borderColor: '#800000', fontSize: '1.2rem' }}>
-            Search
-          </button>
+        <button 
+  onClick={handleSearch} 
+  className="btn btn-primary" 
+  style={{ 
+    backgroundColor: '#800000', 
+    borderColor: '#800000', 
+    fontSize: '1.2rem',
+    width: '18%', // Increase the width
+    transition: 'all 0.3s ease', // Add transition effect for all properties
+    '&:active': {
+      backgroundColor: '#660000', // Change background color on click
+      transform: 'scale(3)', // Scale down on click
+    }
+  }}>
+  Search
+</button>
+
+
         </div>
       </form>
     </div>

@@ -97,7 +97,7 @@ app.post("/api/v1/user/login", async (req, res) => {
     try
     {
         console.log(req.body);
-        const results = await db.query("select password from APP_USER where id = $1", [req.body.user_id]);
+        const results = await db.query("select password from APP_USER where id = $1", [req.body.id]);
         console.log(results.rows);
         if(results.rows.length == 0)
         {
@@ -131,41 +131,31 @@ app.post("/api/v1/user/login", async (req, res) => {
     }
 });
 //get user data
-app.post("/api/v1/user/login", async (req, res) => {
-    try
-    {
-        console.log(req.body);
-        const results = await db.query("select password from APP_USER where id = $1 returning *", [req.body.user_id]);
-        console.log(results.rows);
-        if(results.rows.length == 0)
-        {
-            res.status(201).json({
-                status: "failed",
-                data: {
-                    flightforge : "wrong user id",
-                }
-            });
+app.post("/api/v1/user/profiledata", async (req, res) => {
+    try {
+        const { id, password } = req.body; // Extract parameters from query string
+
+        if (!id || !password) {
+            return res.status(400).json({ error: 'User ID or password not provided.' });
         }
-        if(results.rows[0].password == sha256(req.body.password))
-        {
-            res.status(200).json({
-                status: "success",
-                data: {
-                    flightforge : results.rows,
-                }
-            });
+
+        const hashedPassword = sha256(password);
+
+        const results = await db.query("SELECT * FROM APP_USER WHERE id = $1 AND password = $2", [id, hashedPassword]);
+
+        if (results.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found or incorrect credentials.' });
         }
-        else
-        {
-            res.status(201).json({
-                status: "failed",
-                data: {
-                    flightforge : "wrong password",
-                }
-            });
-        }
-    } catch (err){
-        //console.log(err);
+
+        res.status(200).json({
+            status: "success",
+            data: {
+                user: results.rows[0] // Assuming you expect only one user based on ID
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching user data:', err);
+        res.status(500).json({ error: 'Internal server error.' });
     }
 });
 //update

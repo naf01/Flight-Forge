@@ -13,7 +13,7 @@ const SignInPage = () => {
         e.preventDefault();
         try {
             const response = await RouteFinder.post('/user/login', {
-                user_id: userId,
+                id: userId,
                 password: password
             });
             console.log(response.data);
