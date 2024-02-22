@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; // Import Link
 import RouteFinder from '../apis/RouteFinder';
 import defaultprofileimage from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png';
+import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png';
 
 const UserProfile = () => {
     const [userData, setUserData] = useState(null);
@@ -33,19 +34,31 @@ const UserProfile = () => {
         }
     };    
 
+    const handleSignOut = () => {
+        // Perform signout action here
+        // Redirect to home or perform any other action
+        console.log("Signing out...");
+    };
+
     return (
-        <div className="container-fluid">
+        <div className="container-fluid"  style={{
+            backgroundImage: `url(${backgroundImage})`, // Use the imported background image
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            minHeight: '100vh', // Ensures the background covers the entire viewport height
+            paddingTop: '10px', // Adjust the top padding as needed
+            // You can add more styles as needed
+        }}>
             <div className="container mt-4">
-            <div className="cover-image">
-                <img src={defaultprofileimage} alt="naiii" style={{ width: '300px', marginRight: '10px', padding: '5%'}}/>
-                <div className="row-md-3">
-                        <div className="button-group">
-                            <Link to="/" className="btn btn-danger mb-2">Go to Home</Link>
-                            <div></div>
-                            <button className="btn btn-danger mb-2">Sign Out</button>
-                        </div>
+                <div className="d-flex justify-content-end align-items-center mb-4">
+                    <div className="mr-auto">
+                        <img src={defaultprofileimage} alt="Profile" style={{ width: '100px', borderRadius: '50%', marginRight: '10px' }} />
                     </div>
-            </div>
+                    <div className="button-group">
+                        <Link to="/" className="btn btn-danger mr-2">Go to Home</Link>
+                        <button className="btn btn-danger" onClick={handleSignOut}>Sign Out</button>
+                    </div>
+                </div>
                 <div className="row">
                     <div className="col-md-9">
                         {userData ? (
