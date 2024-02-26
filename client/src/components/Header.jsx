@@ -1,9 +1,33 @@
 // Header.jsx
-import React from 'react';
+import React, { useEffect, useState  } from 'react';
 import { Link } from 'react-router-dom';
 import logoImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png'; // Import your logo image file
+import RouteFinder from '../apis/RouteFinder';
 
-const Header = ({ isLoggedIn, handleSignOut }) => {
+const Header = ({handleSignOut }) => {
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const fetchAirports = async () => {
+      try {
+        const response = await RouteFinder.post('/user/authenticate', {
+          token: localStorage.getItem('token')
+        });
+        console.log(response.status);
+        if(response.status == 200)
+        {
+          setIsLoggedIn(true);
+        }
+        else setIsLoggedIn(false);
+      } catch (error) {
+        setIsLoggedIn(false);
+      }
+    };
+
+    fetchAirports();
+  }, []);
+
   return (
     <div style={{ 
       backgroundColor: 'none', 

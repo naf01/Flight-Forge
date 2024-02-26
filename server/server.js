@@ -5,6 +5,9 @@ const express = require("express");
 const port = process.env.PORT;
 const db = require("./db");
 const crypto = require('crypto');
+const jwtGenerator = require("./utils/jwtGenerator");
+const authorize = require("./middleware/authorize");
+const jwt = require('jsonwebtoken');
 
 function sha256(inputString) {
   const hash = crypto.createHash('sha256');
@@ -49,6 +52,24 @@ async function comparePassword(userId, providedPassword) {
 
 
 
+// Routes requiring authentication
+app.post("/api/v1/user/authenticate", async (req, res) => {
+    const token = req.body.token;
+
+    if (!token) {
+        return res.status(405).json("Authorization Denied");
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log(decoded);
+        res.status(200).json("Authorized");
+    } catch (err) {
+        return res.status(201).json("Not Authorized");
+    }
+});
+
+
             // ######### USER ######### //
             // ######### USER ######### //
             // ######### USER ######### //
@@ -68,14 +89,20 @@ app.post("/api/v1/user/signup", async (req, res) => {
             [first_name, last_name, dateofbirth, mobileno, hashedPassword, city, country, zipcode]
         );
 
+        //const jwtToken = jwtGenerator(results.rows[0].id);
+
+        //console.log(jwtToken);
+
         console.log(results.rows);
 
         if (results.rows.length != 0) {
+            const jwtToken = jwtGenerator(results.rows[0].id);
+            console.log(jwtToken);
             res.status(200).json({
                 status: "success",
                 results: results.rows.length,
                 data: {
-                    flightforge: results.rows,
+                    token: jwtToken
                 }
             });
         } else {
@@ -88,7 +115,7 @@ app.post("/api/v1/user/signup", async (req, res) => {
         }
     } catch (err) {
         console.error("Error:", err);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(201).json({ error: "Internal server error" });
     }
 });
 
@@ -96,9 +123,9 @@ app.post("/api/v1/user/signup", async (req, res) => {
 app.post("/api/v1/user/login", async (req, res) => {
     try
     {
-        console.log(req.body);
+        //console.log(req.body);
         const results = await db.query("select password from APP_USER where id = $1", [req.body.id]);
-        console.log(results.rows);
+        //console.log(results.rows);
         if(results.rows.length == 0)
         {
             res.status(201).json({
@@ -110,10 +137,15 @@ app.post("/api/v1/user/login", async (req, res) => {
         }
         if(results.rows[0].password == sha256(req.body.password))
         {
+            console.log("logged in");
+            console.log("transfered id : " + req.body.id);
+            const jwtToken = jwtGenerator(req.body.id);
+            console.log(jwtToken);
             res.status(200).json({
                 status: "success",
+                results: results.rows.length,
                 data: {
-                    flightforge : results.rows,
+                    token: jwtToken
                 }
             });
         }
@@ -131,17 +163,16 @@ app.post("/api/v1/user/login", async (req, res) => {
     }
 });
 //get user data
-app.post("/api/v1/user/profiledata", async (req, res) => {
+app.post("/api/v1/user/profiledata", authorize, async (req, res) => {
     try {
-        const { id, password } = req.body; // Extract parameters from query string
+        //console.log(req.body);
+        const { id } = req.body; // Extract parameters from query string
 
-        if (!id || !password) {
+        if (!id) {
             return res.status(400).json({ error: 'User ID or password not provided.' });
         }
 
-        const hashedPassword = sha256(password);
-
-        const results = await db.query("SELECT * FROM APP_USER WHERE id = $1 AND password = $2", [id, hashedPassword]);
+        const results = await db.query("SELECT * FROM APP_USER WHERE id = $1", [id]);
 
         if (results.rows.length === 0) {
             return res.status(404).json({ error: 'User not found or incorrect credentials.' });
@@ -257,7 +288,7 @@ app.get("/api/v1/airports", async (req, res) => {
         "SELECT * FROM "+
         " AIRPORT"
         );
-        console.log(results.rows);
+        //console.log(results.rows);
         res.status(200).json({
             status: "success",
             results: results.rows.length,

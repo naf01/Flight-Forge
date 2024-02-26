@@ -1,35 +1,52 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import RouteFinder from '../apis/RouteFinder';
+
 const CreateAccount = () => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState('');
     const [mobileNo, setMobileNo] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [city, setCity] = useState('');
     const [country, setCountry] = useState('');
     const [zipcode, setZipcode] = useState('');
     const [error, setError] = useState('');
+    const [generatedPassword, setGeneratedPassword] = useState('');
+    const navigate = useNavigate(); 
+
+    const handleGeneratePassword = () => {
+        const generatedPass = Math.random().toString(36).slice(-8);
+        setPassword(generatedPass);
+        setGeneratedPassword(generatedPass);
+    };
 
     const handleCreateAccount = async (e) => {
         e.preventDefault();
         try {
+            if (password !== confirmPassword) {
+                setError('Passwords do not match.');
+                return;
+            }
+
             const response = await RouteFinder.post('/user/signup', {
                 first_name: firstName,
                 last_name: lastName,
                 dateofbirth: dateOfBirth,
-                mobileno: [mobileNo], // Convert mobileNo to an array
+                mobileno: [mobileNo], 
                 password: password,
                 city: city,
                 country: country,
-                zipcode: parseInt(zipcode) // Convert zipcode to integer
+                zipcode: parseInt(zipcode)
             });
             
-            console.log(response.data);
+            if (response.status === 200) {
+                const token = response.data.data.token;
+                localStorage.setItem('token', token);
+                navigate("/");
+            }
 
-            // Handle successful account creation, such as redirecting to another page
         } catch (err) {
             setError('Failed to create account. Please try again.');
             console.error('Error creating account:', err);
@@ -68,6 +85,12 @@ const CreateAccount = () => {
                                     <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
                                 </div>
                                 <div className="form-group">
+                                    <label>Confirm Password:</label>
+                                    <input type="password" className="form-control" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                                    {confirmPassword && password !== confirmPassword && <p className="text-danger">Passwords do not match.</p>}
+                                    {confirmPassword && password === confirmPassword && <p className="text-success">Passwords match.</p>}
+                                </div>
+                                <div className="form-group">
                                     <label>City:</label>
                                     <input type="text" className="form-control" value={city} onChange={(e) => setCity(e.target.value)} required />
                                 </div>
@@ -79,6 +102,8 @@ const CreateAccount = () => {
                                     <label>Zipcode:</label>
                                     <input type="number" className="form-control" value={zipcode} onChange={(e) => setZipcode(e.target.value)} required />
                                 </div>
+                                <button type="button" className="btn btn-success mb-3" onClick={handleGeneratePassword}>Generate Password</button>
+                                <p>Generated Password: {generatedPassword}</p>
                                 <button type="submit" className="btn btn-danger btn-block">Create Account</button>
                             </form>
                             <Link to="/signin" className="btn btn-link mt-3">Already have an account? Sign In</Link>

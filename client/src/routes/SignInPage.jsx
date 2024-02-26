@@ -18,7 +18,10 @@ const SignInPage = () => {
             });
             console.log(response.data);
             if (response.status === 200 && response.data.status === "success") {
-                navigate('/', { state: { isLoggedIn: true } }); // Pass isLoggedIn state to Home.jsx
+                const token = response.data.data.token;
+                console.log(response);
+                localStorage.setItem('token', token);
+                navigate("/");
             } else {
                 setError('Invalid credentials. Please try again.');
             }

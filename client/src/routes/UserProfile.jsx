@@ -1,30 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Import Link
+import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate
 import RouteFinder from '../apis/RouteFinder';
-import defaultprofileimage from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png';
+import defaultprofileimage from 'D:/CP/Projects/Flight-Forge/client/src/assets/atika.jpeg';
 import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png';
 
 const UserProfile = () => {
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const navigate = useNavigate(); // Use useNavigate hook
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        const fetchUserData = async () => {
+            try {
+                const response = await RouteFinder.post('/user/authenticate', {
+                    token: localStorage.getItem('token')
+                });
+                console.log(response.status);
+                if (response.status === 200) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                    navigate('/'); // Redirect to "/" if not logged in
+                }
+            } catch (error) {
+                setIsLoggedIn(false);
+                navigate('/'); // Redirect to "/" if not logged in
+            }
+        };
 
-    const fetchData = async () => {
+        fetchUserData();
+        fetchProfileData();
+    }, [navigate]);
+
+    const fetchProfileData = async () => {
         try {
-            const userId = 34;
-            const password = 'atikahoneybeeeofsakib';
-    
-            if (!userId || !password) {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
                 setError('User ID or password not found.');
                 return;
             }
-    
+
             const response = await RouteFinder.post('/user/profiledata', {
-                id: userId,
-                password: password
+                id: 0,
+                token: token
             });
             console.log(response);
             setUserData(response.data.data.user);
@@ -32,16 +52,16 @@ const UserProfile = () => {
             console.error('Error fetching user data:');
             setError('Failed to fetch user data. Please try again.');
         }
-    };    
+    };
 
     const handleSignOut = () => {
-        // Perform signout action here
-        // Redirect to home or perform any other action
+        localStorage.removeItem('token');
+        window.location.reload(); // Reload the current page
         console.log("Signing out...");
     };
 
     return (
-        <div className="container-fluid"  style={{
+        <div className="container-fluid" style={{
             backgroundImage: `url(${backgroundImage})`, // Use the imported background image
             backgroundSize: 'cover',
             backgroundPosition: 'center',
@@ -52,34 +72,94 @@ const UserProfile = () => {
             <div className="container mt-4">
                 <div className="d-flex justify-content-end align-items-center mb-4">
                     <div className="mr-auto">
-                        <img src={defaultprofileimage} alt="Profile" style={{ width: '100px', borderRadius: '50%', marginRight: '10px' }} />
+                        <img src={defaultprofileimage} alt="Profile" style={{ width: '150px', height: '150px', borderRadius: '50%', marginRight: '10px' }} />
+                        <h1 style={{ paddingTop: '30px', color: 'green', fontWeight: 'bold', fontFamily: 'cursive' }}>{userData ? userData.id : ''}</h1>
                     </div>
                     <div className="button-group">
-                        <Link to="/" className="btn btn-danger mr-2">Go to Home</Link>
-                        <button className="btn btn-danger" onClick={handleSignOut}>Sign Out</button>
+                        <Link style={{
+              color: 'white', 
+              backgroundColor: '#800000', 
+              padding: '15px 20px', // Adjust padding here
+              marginRight: '10px', 
+              borderRadius: '5px',
+              cursor: 'pointer',
+              textDecoration: 'none', 
+              fontSize: '16px', 
+              transition: 'background-color 0.3s',
+            }} to="/">Go to Home</Link>
+                        <button style={{
+              color: 'white', 
+              backgroundColor: '#800000', 
+              padding: '15px 20px', // Adjust padding here
+              marginRight: '10px', 
+              borderRadius: '5px',
+              cursor: 'pointer',
+              textDecoration: 'none', 
+              fontSize: '16px', 
+              transition: 'background-color 0.3s',
+            }} onClick={handleSignOut}>Sign Out</button>
                     </div>
                 </div>
-                <div className="row">
+                <div className="row justify-content-center">
                     <div className="col-md-9">
                         {userData ? (
                             <div>
                                 <div className="user-info-group shadow p-3 mb-5 bg-white rounded">
-                                    <h4>User Info</h4>
-                                    <p>First Name: {userData.first_name}</p>
-                                    <p>Last Name: {userData.last_name}</p>
-                                    <p>Date of Birth: {userData.dateofbirth}</p>
-                                    <p>Age: {userData.age}</p>
+                                    <h4 style={{ marginBottom: '20px', fontSize: '24px', textAlign: 'center', fontFamily: 'cursive' }}>User Info</h4>
+                                    <table className="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th>First Name</th>
+                                                <td>{userData.first_name}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Last Name</th>
+                                                <td>{userData.last_name}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Date of Birth</th>
+                                                <td>{userData.dateofbirth}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Age</th>
+                                                <td>{userData.age}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                                 <div className="contact-group shadow p-3 mb-5 bg-white rounded">
-                                    <h4>Contact</h4>
-                                    <p>Mobile Number: {userData.mobileno.join(', ')}</p>
-                                    <p>Gmail Account: {userData.email}</p>
+                                    <h4 style={{ marginBottom: '20px', fontSize: '24px', textAlign: 'center', fontFamily: 'cursive' }}>Contact</h4>
+                                    <table className="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th>Mobile Number</th>
+                                                <td>{userData.mobileno.join(', ')}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Gmail Account</th>
+                                                <td>{userData.email}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                                 <div className="address-group shadow p-3 mb-5 bg-white rounded">
-                                    <h4>Address</h4>
-                                    <p>City: {userData.city}</p>
-                                    <p>Country: {userData.country}</p>
-                                    <p>Zipcode: {userData.zipcode}</p>
+                                    <h4 style={{ marginBottom: '20px', fontSize: '24px', textAlign: 'center', fontFamily: 'cursive' }}>Address</h4>
+                                    <table className="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th>City</th>
+                                                <td>{userData.city}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Country</th>
+                                                <td>{userData.country}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Zipcode</th>
+                                                <td>{userData.zipcode}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         ) : (

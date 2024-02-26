@@ -4,14 +4,16 @@ import Header from '../components/Header';
 import SearchRoute from '../components/SearchRoute';
 import RouteList from '../components/RouteList';
 import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png'; // Import your background image
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(true); // Set initial state to true for logged-in
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
+    const navigate = useNavigate();
 
     const handleSignOut = () => {
-        // Perform signout action here
+        localStorage.removeItem('token');
         setIsLoggedIn(false);
-        // Redirect to home or perform any other action
+        window.location.reload();
     };
 
     return (
