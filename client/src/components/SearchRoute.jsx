@@ -92,18 +92,122 @@ const SearchRoute = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     try {
-      const response = await RouteFinder.post('/searchRoute', {
-        start_airport_name: startAirport,
-        end_airport_name: endAirport,
-        date: selectedDate.toISOString(),
-        traveler_count: travelerCount,
-        ticket_class: ticketClass, // Include ticket class in the request
-      });
-      setRoutes(response.data.data.Route);
+        let response1 = await RouteFinder.post('/airport/findbyname', {
+            name: startAirport
+        });
+        let start_airport_id = response1.data.id;
+        response1 = await RouteFinder.post('/airport/findbyname', {
+            name: endAirport
+        });
+        let end_airport_id = response1.data.id;
+
+        const day = selectedDate.getDate();
+        const month = selectedDate.getMonth() + 1; // Month starts from 0, so add 1
+        const year = selectedDate.getFullYear();
+
+        // Create the formatted date string in the format day/month/year
+        const formattedDate = `${year}-${month}-${day}`;
+        //console.log(formattedDate);
+
+        const response = await RouteFinder.post('/transit', {
+            start_airport_id: start_airport_id,
+            end_airport_id: end_airport_id,
+            date: formattedDate,
+            seat_type: ticketClass
+        });
+
+        // Get the transit data
+        const transitData = response.data.data.Transit;
+        // Initialize arrays to store modified data
+        const modifiedDates = [];
+        const modifiedAirports = [];
+        const modifiedTransit = [];
+        const modifiedRoutes = [];
+        const modifiedAirplanes = [];
+
+        // Loop through each transit to find end_airport_id and cut the arrays
+        transitData.forEach(transit => {
+            const transitArray = transit.transit;
+            const endAirportIndex = transitArray.indexOf(end_airport_id);
+            let sta = true;
+            for (let i = 0; i < endAirportIndex; i++) {
+                for (let j = i + 1; j < endAirportIndex; j++) {
+                    if (transitArray[i] == transitArray[j]) {
+                        sta = false;
+                    }
+                }
+            }
+            // Check if end_airport_id is found in the transit array and all elements are unique
+            if (sta && endAirportIndex !== -1) {
+                // Cut the transit array from start to end_airport_id
+                const trimmedTransit = transitArray.slice(0, endAirportIndex + 1);
+                // Push the trimmed transit array to modifiedTransit
+                modifiedTransit.push(trimmedTransit);
+
+                // Save the start and end indices
+                const startIndex = 0;
+                const endIndex = endAirportIndex + 1;
+
+                // Cut the dates, airports, routes, and airplanes arrays according to the indices
+                modifiedDates.push(transit.dates.slice(startIndex, endIndex).map(date => {
+                    // Convert each date to year-month-day format
+                    const formattedDate = new Date(date).toISOString().split('T')[0];
+                    return formattedDate;
+                }));
+                modifiedAirports.push(transit.airports.slice(startIndex, endIndex));
+                modifiedRoutes.push(transit.routes.slice(startIndex, endIndex));
+                modifiedAirplanes.push(transit.airplanes.slice(startIndex, endIndex));
+            }
+        });
+
+        // Trim the remaining elements after the end airport
+        modifiedTransit.forEach((transit, index) => {
+            const endAirportIndex = transit.indexOf(end_airport_id);
+            if (endAirportIndex !== -1) {
+                // Cut the transit array from end_airport_id to the end
+                modifiedTransit[index] = transit.slice(0, endAirportIndex + 1);
+                // Cut the dates, airports, routes, and airplanes arrays accordingly
+                modifiedDates[index] = modifiedDates[index].slice(0, endAirportIndex + 1);
+                modifiedAirports[index] = modifiedAirports[index].slice(0, endAirportIndex + 1);
+                modifiedRoutes[index] = modifiedRoutes[index].slice(0, endAirportIndex);
+                modifiedAirplanes[index] = modifiedAirplanes[index].slice(0, endAirportIndex);
+            }
+        });
+
+        let seats_left = [], seat=0, x=0;
+
+        for(let i=0;i<modifiedTransit.length;i++){
+            seat = 1000000;
+            for(let j=0;j<modifiedRoutes[i].length;j++){
+              //console.log(modifiedRoutes[i][j], modifiedDates[i][j], ticketClass);
+                let response3 = await RouteFinder.post('/route/seats', {
+                    route_id: modifiedRoutes[i][j],
+                    date: modifiedDates[i][j],
+                    seat_type: ticketClass
+                });
+                if(response3.data.results && response3.data.seat < seat){
+                    seat = response3.data.seat.seatleft_commercial;
+                    console.log(response3.data.seat);
+                }
+            }
+            if(seat == 1000000) seats_left.push(0);
+            else seats_left.push(seat);
+        }
+        console.log(seats_left);
+
+        console.log(modifiedTransit);
+        console.log(modifiedDates);
+        console.log(modifiedAirports);
+        console.log(modifiedRoutes);
+        console.log(modifiedAirplanes);
+
     } catch (err) {
-      console.error('Error searching for routes:', err);
+        console.error(err);
     }
-  };
+};
+
+
+
 
   return (
     <div className="mb-4" style={{ 

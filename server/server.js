@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const jwtGenerator = require("./utils/jwtGenerator");
 const authorize = require("./middleware/authorize");
 const jwt = require('jsonwebtoken');
+const { start } = require("repl");
 
 function sha256(inputString) {
   const hash = crypto.createHash('sha256');
@@ -281,6 +282,23 @@ app.post("/api/v1/searchRoute/locationn", async (req, res) => {
 
 //Buy Ticket
 
+
+
+app.post("/api/v1/airport/findbyname", async (req, res) => {
+    try
+    {
+        const results = await db.query("SELECT id FROM AIRPORT WHERE upper(NAME) = upper($1)", [req.body.name]);
+        res.status(200).json({
+            status: "success",
+            id : results.rows[0].id
+        });
+    } catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
 app.get("/api/v1/airports", async (req, res) => {
     try
     {
@@ -297,31 +315,48 @@ app.get("/api/v1/airports", async (req, res) => {
             }
         });
     } catch (err){
-        //console.log(err);
+        res.status(201).json({
+            status: "failure"
+        });
     }
 });
 
 //get all restaurants
-app.post("/api/v1/searchRoute", async (req, res) => {
+app.post("/api/v1/transit", async (req, res) => {
+    try{
+        console.log(req.body);
+        const results = await db.query("SELECT * FROM FindAirplaneTransitPaths($1, $2, $3::DATE, upper($4))", [req.body.start_airport_id, req.body.end_airport_id, req.body.date, req.body.seat_type]);
+        res.status(200).json({
+            status: "success",
+            results: results.rows.length,
+            data: {
+                Transit : results.rows,
+            }
+        });
+    }
+    catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
+app.post("/api/v1/route/seats", async (req, res ) => {
     try
     {
-        console.log(req);
-        console.log(req.body);
-        console.log(req.body.start_airport_name);
-        const s_id = await db.query("select id from Airport where name = $1", [req.body.start_airport_name]);
-        console.log(s_id.rows);
-        const e_id = await db.query("select id from Airport where name = $1", [req.body.end_airport_name]);
-        console.log(e_id.rows);
-        const results = await db.query("select * from Route where start_airport_id = $1 and end_airport_id = $2", [s_id.rows[0].id, e_id.rows[0].id]);
+        let results = await db.query("SELECT seatleft_commercial FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
+        if (req.body.seat_type == "business") results = await db.query("SELECT seatleft_business FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
+        //console.log(results.rows);
         res.status(200).json({
-        status: "success",
-        results: results.rows.length,
-        data: {
-            Route : results.rows,
-        }
-    });
-    } catch (err){
-        //console.log(err);
+            status: "success",
+            results: results.rows.length,
+            seat : results.rows[0].seatleft_commercial
+        });
+    }
+    catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
     }
 });
 
