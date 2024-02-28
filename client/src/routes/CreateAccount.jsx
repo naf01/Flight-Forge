@@ -7,6 +7,7 @@ const CreateAccount = () => {
     const [lastName, setLastName] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState('');
     const [mobileNo, setMobileNo] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [city, setCity] = useState('');
@@ -30,6 +31,13 @@ const CreateAccount = () => {
                 return;
             }
 
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if(!emailPattern.test(email))
+            {
+                setError('Invalid email address.');
+                return;
+            }
+
             const response = await RouteFinder.post('/user/signup', {
                 first_name: firstName,
                 last_name: lastName,
@@ -38,7 +46,8 @@ const CreateAccount = () => {
                 password: password,
                 city: city,
                 country: country,
-                zipcode: parseInt(zipcode)
+                zipcode: parseInt(zipcode),
+                email: email
             });
             
             if (response.status === 200) {
@@ -75,6 +84,10 @@ const CreateAccount = () => {
                                 <div className="form-group">
                                     <label>Date of Birth:</label>
                                     <input type="date" className="form-control" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email:</label>
+                                    <input type="text" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
                                 </div>
                                 <div className="form-group">
                                     <label>Mobile No:</label>

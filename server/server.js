@@ -78,16 +78,16 @@ app.post("/api/v1/user/authenticate", async (req, res) => {
 app.post("/api/v1/user/signup", async (req, res) => {
     try {
         console.log(req.body);
-        const { first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode } = req.body;
+        const { first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, email } = req.body;
 
         // Assuming you have the sha256 function available for hashing the password
         const hashedPassword = sha256(password);
 
         const results = await db.query(
-            `INSERT INTO APP_USER (first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, age)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CalculateAge($3))
+            `INSERT INTO APP_USER (first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, age, email)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CalculateAge($3), $9)
             RETURNING *`,
-            [first_name, last_name, dateofbirth, mobileno, hashedPassword, city, country, zipcode]
+            [first_name, last_name, dateofbirth, mobileno, hashedPassword, city, country, zipcode, email]
         );
 
         //const jwtToken = jwtGenerator(results.rows[0].id);
@@ -344,13 +344,46 @@ app.post("/api/v1/transit", async (req, res) => {
 app.post("/api/v1/route/seats", async (req, res ) => {
     try
     {
-        let results = await db.query("SELECT seatleft_commercial FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
-        if (req.body.seat_type == "business") results = await db.query("SELECT seatleft_business FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
-        //console.log(results.rows);
+        let results;
+        let x;
+        if (req.body.seat_type == "commercial")
+        {
+            results = await db.query("SELECT seatleft_commercial FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
+            x = results.rows[0].seatleft_commercial;
+        }
+        else
+        {
+            results = await db.query("SELECT seatleft_business FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
+            x = results.rows[0].seatleft_business;
+        }
         res.status(200).json({
             status: "success",
             results: results.rows.length,
-            seat : results.rows[0].seatleft_commercial
+            seat : x
+        });
+    }
+    catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
+app.post("/api/v1/route/distanceandcost", async (req, res ) => {
+    try
+    {
+        let results;
+        let distance = 0.0, cost = 0;
+        results = await db.query("SELECT distance_km FROM route WHERE id = $1", [req.body.route_id]);
+        distance = (results.rows[0].distance_km);
+        if(req.body.seat_type == 'commercial') results = await db.query(`select cost_commercial as c from seat_info where route_id = $1 and journeydate = $2`, [req.body.route_id, req.body.date]);
+        else results = await db.query(`select cost_business as c from seat_info where route_id = $1 and journeydate = $2`, [req.body.route_id, req.body.date]);
+        cost = results.rows[0].c;
+        res.status(200).json({
+            status: "success",
+            results: results.rows.length,
+            distance : distance,
+            cost: cost
         });
     }
     catch (err){

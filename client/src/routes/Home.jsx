@@ -18,7 +18,7 @@ const Home = () => {
 
     return (
         <div style={{
-            backgroundImage: `url(${backgroundImage})`, // Use the imported background image
+            // backgroundImage: `url(${backgroundImage})`, // Use the imported background image
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             minHeight: '100vh', // Ensures the background covers the entire viewport height

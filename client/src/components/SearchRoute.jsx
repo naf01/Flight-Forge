@@ -4,6 +4,20 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { RouteContext } from '../context/RouteContext';
 import RouteFinder from '../apis/RouteFinder';
 
+class TransitInfo {
+  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost) {
+      this.transit = transit;
+      this.date = date;
+      this.airport = airport;
+      this.route = route;
+      this.airplaneid = airplaneid;
+      this.airplanename = airplanename;
+      this.seatsLeft = seatsLeft;
+      this.distance = distance;
+      this.cost = cost;
+  }
+}
+
 const SearchRoute = () => {
   const [startAirport, setStartAirport] = useState('');
   const [endAirport, setEndAirport] = useState('');
@@ -123,7 +137,8 @@ const SearchRoute = () => {
         const modifiedAirports = [];
         const modifiedTransit = [];
         const modifiedRoutes = [];
-        const modifiedAirplanes = [];
+        const modifiedAirplanesid = [];
+        const modifiedAirplanesname = [];
 
         // Loop through each transit to find end_airport_id and cut the arrays
         transitData.forEach(transit => {
@@ -156,7 +171,8 @@ const SearchRoute = () => {
                 }));
                 modifiedAirports.push(transit.airports.slice(startIndex, endIndex));
                 modifiedRoutes.push(transit.routes.slice(startIndex, endIndex));
-                modifiedAirplanes.push(transit.airplanes.slice(startIndex, endIndex));
+                modifiedAirplanesid.push(transit.airplanesid.slice(startIndex, endIndex));
+                modifiedAirplanesname.push(transit.airplanesname.slice(startIndex, endIndex));
             }
         });
 
@@ -170,14 +186,19 @@ const SearchRoute = () => {
                 modifiedDates[index] = modifiedDates[index].slice(0, endAirportIndex + 1);
                 modifiedAirports[index] = modifiedAirports[index].slice(0, endAirportIndex + 1);
                 modifiedRoutes[index] = modifiedRoutes[index].slice(0, endAirportIndex);
-                modifiedAirplanes[index] = modifiedAirplanes[index].slice(0, endAirportIndex);
+                modifiedAirplanesid[index] = modifiedAirplanesid[index].slice(0, endAirportIndex);
+                modifiedAirplanesname[index] = modifiedAirplanesname[index].slice(0, endAirportIndex);
             }
         });
 
-        let seats_left = [], seat=0, x=0;
+        let seats_left = [], seat=0;
+        let totaldistance = [], dist = 0.0;
+        let totalcost = [], cost = 0;
 
         for(let i=0;i<modifiedTransit.length;i++){
             seat = 1000000;
+            dist = 0;
+            cost = 0;
             for(let j=0;j<modifiedRoutes[i].length;j++){
               //console.log(modifiedRoutes[i][j], modifiedDates[i][j], ticketClass);
                 let response3 = await RouteFinder.post('/route/seats', {
@@ -186,28 +207,51 @@ const SearchRoute = () => {
                     seat_type: ticketClass
                 });
                 if(response3.data.results && response3.data.seat < seat){
-                    seat = response3.data.seat.seatleft_commercial;
+                    seat = response3.data.seat;
                     console.log(response3.data.seat);
+                }
+
+                response3 = await RouteFinder.post('/route/distanceandcost', {
+                    route_id: modifiedRoutes[i][j],
+                    date: modifiedDates[i][j],
+                    seat_type: ticketClass
+                });
+                if(response3.data.results)
+                {
+                  cost = cost + response3.data.cost;
+                  dist = dist + response3.data.distance;
                 }
             }
             if(seat == 1000000) seats_left.push(0);
             else seats_left.push(seat);
+            totaldistance.push(dist);
+            totalcost.push(cost);
         }
-        console.log(seats_left);
 
-        console.log(modifiedTransit);
-        console.log(modifiedDates);
-        console.log(modifiedAirports);
-        console.log(modifiedRoutes);
-        console.log(modifiedAirplanes);
+        // console.log(totalcost);
+        // console.log(totaldistance);
+        // console.log(seats_left);
+
+        // console.log(modifiedTransit);
+        // console.log(modifiedDates);
+        // console.log(modifiedAirports);
+        // console.log(modifiedRoutes);
+        // console.log(modifiedAirplanesid);
+        // console.log(modifiedAirplanesname);
+
+        const Ti = [];
+
+        for(let i=0;i<modifiedTransit.length;i++){
+            Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i]));
+        }
+        console.log(Ti);
+
+        //create a new datat type to store from each of the arrays
 
     } catch (err) {
         console.error(err);
     }
 };
-
-
-
 
   return (
     <div className="mb-4" style={{ 
@@ -216,7 +260,7 @@ const SearchRoute = () => {
       borderRadius: '10px', 
       boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.75)',
       margin: '20px auto',
-      width: '75%'
+      width: '63%'
     }}>
       <form>
         <div className="form-row mb-3">
