@@ -190,6 +190,33 @@ app.post("/api/v1/user/profiledata", authorize, async (req, res) => {
         res.status(500).json({ error: 'Internal server error.' });
     }
 });
+//user buys ticket
+app.post("/api/v1/user/buyticket", async (req, res) => {
+    try
+    {
+        const { route_id, date, seat_type, user_id, transaction_id } = req.body;
+        const results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5)", [route_id, user_id, transaction_id, date, seat_type]);
+        console.log(results.rows);
+        if(results.rows[0].buyticket > 0)
+        {
+            res.status(200).json({
+                status: "success",
+                results: results.rows.length,
+                ticket_id : results.rows[0].buyticket
+            });
+        }
+        else
+        {
+            res.status(201).json({
+                status: "failed"
+            });
+        }
+    } catch (err){
+        res.status(201).json({
+            status: "failed"
+        });
+    }
+});
 //update
 
 
@@ -375,30 +402,29 @@ app.post("/api/v1/route/seats", async (req, res ) => {
     {
         let results;
         let x;
-        x = await db.query("SELECT count(*) FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
-        if(!x.rows[0].count);
+        x = await db.query("SELECT id FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
+        if(!x.rows.length)
         {
-            await db.query("INSERT INTO SEAT_INFO (route_id, journeydate, seatleft_business, seatleft_commercial, cost_business, cost_commercial) values "+
-            "($1, $2, (select business_seat from airplane where id = (select airplane_id from route where id = $1)), "+
-            "(select commercial_seat from airplane where id = (select airplane_id from route where id = $1)), "+
-            "((select business_seat from airplane where id = (select airplane_id from route where id = $1))*(select cost_per_km_business "+
-            "from airplane where id = (select airplane_id from route where id = $1))), "+
-            "((select commercial_seat from airplane where id = "+
-            "(select airplane_id from route where id = $1))*(select cost_per_km_commercial from airplane where id = (select airplane_id from route where id = $1))))", [req.body.route_id, req.body.date]);
+            await db.query("INSERT INTO SEAT_INFO (route_id, journeydate, airplane_id, seatleft_business, seatleft_commercial, cost_business, cost_commercial) "+
+            "values ($1, $2::DATE, (select airplane_id from route where id = $1), (select business_seat from airplane "+
+            "where id = (select airplane_id from route where id = $1)), (select commercial_seat from airplane where id = (select airplane_id from route where id = $1)), "+
+            "((select distance_km from route where id = $1)* (select cost_per_km_business from airplane where id = (select airplane_id from route where id = $1))), "+
+            "((select distance_km from route where id = $1)* (select cost_per_km_commercial from airplane where id = (select airplane_id from route where id = $1))) )", [req.body.route_id, req.body.date]);
         }
         if (req.body.seat_type == "commercial")
         {
             results = await db.query("SELECT seatleft_commercial FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
             x = results.rows[0].seatleft_commercial;
+            if(x == null) x = 0;
         }
         else
         {
             results = await db.query("SELECT seatleft_business FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
             x = results.rows[0].seatleft_business;
+            if(x == null) x = 0;
         }
         res.status(200).json({
             status: "success",
-            results: results.rows.length,
             seat : x
         });
     }
@@ -416,9 +442,8 @@ app.post("/api/v1/route/distanceandcost", async (req, res ) => {
         let distance = 0.0, cost = 0;
         results = await db.query("SELECT distance_km FROM route WHERE id = $1", [req.body.route_id]);
         distance = (results.rows[0].distance_km);
-        if(req.body.seat_type == 'commercial') results = await db.query(`select cost_commercial as c from seat_info where route_id = $1 and journeydate = $2`, [req.body.route_id, req.body.date]);
-        else results = await db.query(`select cost_business as c from seat_info where route_id = $1 and journeydate = $2`, [req.body.route_id, req.body.date]);
-        cost = results.rows[0].c;
+        results = await db.query("SELECT DYNAMICCOST($1, $2::DATE, $3)", [req.body.route_id, req.body.date, req.body.seat_type]);
+        cost = results.rows[0].dynamiccost;
         res.status(200).json({
             status: "success",
             results: results.rows.length,

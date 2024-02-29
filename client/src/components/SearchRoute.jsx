@@ -24,7 +24,7 @@ const SearchRoute = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [travelerCount, setTravelerCount] = useState(1);
   const [ticketClass, setTicketClass] = useState('commercial'); // Default ticket class
-  const { setTransitInfo } = useContext(RouteContext);
+  const { transitInfo, setSelectedTransit, setTransitInfo, clicked, setclicked } = useContext(RouteContext);
   const [airports, setAirports] = useState([]);
   const [startSuggestedAirports, setStartSuggestedAirports] = useState([]);
   const [endSuggestedAirports, setEndSuggestedAirports] = useState([]);
@@ -106,6 +106,22 @@ const SearchRoute = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     try {
+        if(!startAirport || !endAirport)
+        {
+            const Ti = [];
+            setTransitInfo(Ti);
+            setclicked("Select Airports First");
+            return;
+        }
+
+        if(startAirport == endAirport)
+        {
+            const Ti = [];
+            setTransitInfo(Ti);
+            setclicked("Start and End Airport can't be same");
+            return;
+        }
+
         let response1 = await RouteFinder.post('/airport/findbyname', {
             name: startAirport
         });
@@ -206,9 +222,9 @@ const SearchRoute = () => {
                     date: modifiedDates[i][j],
                     seat_type: ticketClass
                 });
-                if(response3.data.results && response3.data.seat < seat){
+                if(response3.data.seat < seat){
                     seat = response3.data.seat;
-                    console.log(response3.data.seat);
+                    console.log(response3.data);
                 }
 
                 response3 = await RouteFinder.post('/route/distanceandcost', {
@@ -216,6 +232,7 @@ const SearchRoute = () => {
                     date: modifiedDates[i][j],
                     seat_type: ticketClass
                 });
+                console.log(response3.data);
                 if(response3.data.results)
                 {
                   cost = cost + response3.data.cost;
@@ -224,7 +241,9 @@ const SearchRoute = () => {
             }
             if(seat == 1000000) seats_left.push(0);
             else seats_left.push(seat);
+            if(!dist) dist = 0.0;
             totaldistance.push(dist);
+            if(!cost) cost = 0;
             totalcost.push(cost);
         }
 
@@ -242,11 +261,14 @@ const SearchRoute = () => {
         const Ti = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
-            Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i]));
+            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i]));
         }
         console.log(Ti);
 
         setTransitInfo(Ti);
+        
+        if(!Ti.length) setclicked("No Transit Found");
+        else setclicked("");
 
         //create a new datat type to store from each of the arrays
 
@@ -439,27 +461,33 @@ const SearchRoute = () => {
 
         <div className="form-row mb-3">
           <div className="col">
-            <div className="input-group">
-              <DatePicker
+          <div className="input-group">
+            <DatePicker
                 selected={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
+                minDate={new Date()} // Sets the minimum date to today
                 dateFormat="dd/MM/yyyy"
                 className="form-control"
                 placeholderText="Select Date"
                 style={{ fontSize: '1.2rem' }}
-              />
-              <div className="input-group-append">
+            />
+            <div className="input-group-append">
                 <span className="input-group-text">
-                  <i className="fa fa-calendar"></i>
+                    <i className="fa fa-calendar"></i>
                 </span>
-              </div>
             </div>
+        </div>
           </div>
           <div className="col">
             <input
               type="number"
               value={travelerCount}
-              onChange={(e) => setTravelerCount(e.target.value)}
+              onChange={(e) => 
+              {
+                if(e.target.value < 1) setTravelerCount(1);
+                else if(e.target.value > 30) setTravelerCount(10);
+                else setTravelerCount(e.target.value);
+              }}
               className="form-control"
               placeholder="Traveler Count"
               style={{ fontSize: '1.2rem' }}

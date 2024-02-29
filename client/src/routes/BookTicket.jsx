@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { RouteContext } from '../context/RouteContext';
-import { Link, Navigate, useNavigate } from 'react-router-dom'; // Import Link and useNavigate
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import RouteFinder from '../apis/RouteFinder';
 
 const BookTicket = () => {
@@ -10,19 +9,18 @@ const BookTicket = () => {
     const [paymentMethod, setPaymentMethod] = useState('');
     const [error, setError] = useState('');
     const [authenticated, setAuthenticated] = useState(false);
-    const navigate = useNavigate(); // Use useNavigate hook
+    const [transactionId, setTransactionId] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                console.log('Checking authentication...');
                 const response = await RouteFinder.post('/user/authenticate', {
                     token: localStorage.getItem('token')
                 });
-                console.log(response.status);
                 if (response.status === 200) {
                 } else {
-                    navigate('/signin'); // Redirect to "/" if not logged in
+                    navigate('/signin');
                 }
             } catch (error) {
                 setAuthenticated(false);
@@ -38,19 +36,20 @@ const BookTicket = () => {
             return;
         }
 
-        // Add your booking logic here
-        console.log('Booking', seatsToBook, 'seats using', paymentMethod);
-        // Redirect to another page
-        window.location.href = '/booked';
+        const id = prompt('Enter Transaction ID');
+        if (id !== null) {
+            setTransactionId(id);
+            navigate('/');
+        }
     };
 
     const handleGoToHome = () => {
-        window.location.href = '/';
+        navigate('/');
     };
 
     const handleSignOut = () => {
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        navigate('/login');
     };
 
     return (
@@ -86,8 +85,20 @@ const BookTicket = () => {
                         <h5>Book Seats</h5>
                         {error && <div className="alert alert-danger">{error}</div>}
                         <div className="mb-3">
+                            <label className='font-weight-bold'>Total Cost:</label>
+                            <input type="text" className="form-control" value={`$${seatsToBook * selectedTransit.cost}`} readOnly style={{ backgroundColor: '#F0F0F0' }} />
+                        </div>
+                        <div className="mb-3">
                             <label className='font-weight-bold' htmlFor="seats">Seats to Book:</label>
-                            <input type="number" id="seats" className="form-control" value={seatsToBook} onChange={(e) => setSeatsToBook(e.target.value)} />
+                            <input type="number" id="seats" className="form-control" value={seatsToBook} onChange={(e) => {
+                                if (e.target.value < 1) {
+                                    setSeatsToBook(1);
+                                } else if (e.target.value > 30) {
+                                    setSeatsToBook(30);
+                                } else {
+                                    setSeatsToBook(e.target.value);
+                                }
+                            }} />
                         </div>
                         <div className="mb-3">
                             <label className='font-weight-bold' htmlFor="paymentMethod">Payment Method:</label>

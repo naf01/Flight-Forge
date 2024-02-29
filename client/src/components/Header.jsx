@@ -42,7 +42,7 @@ const Header = ({handleSignOut }) => {
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <img src={logoImage} alt="Logo" style={{ width: '150px', marginRight: '10px' }} /> {/* Adjust width here */}
       </div>
-      <h1 style={{ color: 'black', fontWeight: 'bold', fontSize: '64px', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)', margin: '0', textAlign: 'center' }}>FlightForge</h1>
+      <h1 style={{ color: 'black', fontWeight: 'bold', fontSize: '64px', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)', margin: '0', textAlign: 'center' }}>Fly Higher With Us</h1>
       <div style={{ display: 'flex' }}>
         {!isLoggedIn ? (
           <Link 
