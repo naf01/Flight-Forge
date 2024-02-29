@@ -24,7 +24,7 @@ const SearchRoute = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [travelerCount, setTravelerCount] = useState(1);
   const [ticketClass, setTicketClass] = useState('commercial'); // Default ticket class
-  const { setRoutes } = useContext(RouteContext);
+  const { setTransitInfo } = useContext(RouteContext);
   const [airports, setAirports] = useState([]);
   const [startSuggestedAirports, setStartSuggestedAirports] = useState([]);
   const [endSuggestedAirports, setEndSuggestedAirports] = useState([]);
@@ -245,6 +245,8 @@ const SearchRoute = () => {
             Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i]));
         }
         console.log(Ti);
+
+        setTransitInfo(Ti);
 
         //create a new datat type to store from each of the arrays
 

@@ -6,6 +6,7 @@ import ReviewPage from './routes/ReviewPage';
 import SignInPage from './routes/SignInPage';
 import CreateAccount from './routes/CreateAccount';
 import UserProfile from './routes/UserProfile';
+import BookTicket from './routes/BookTicket';
 
 const App = () => {
     return (
@@ -18,6 +19,7 @@ const App = () => {
                     <Route path="/signin" element={<SignInPage />} />
                     <Route path="/CreateAccount" element={<CreateAccount />} />
                     <Route path="/userprofile" element={<UserProfile />} />
+                    <Route path="/bookticket" element={<BookTicket />} />
                 </Routes>
             </Router>
         </div>

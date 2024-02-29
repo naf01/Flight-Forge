@@ -58,7 +58,7 @@ app.post("/api/v1/user/authenticate", async (req, res) => {
     const token = req.body.token;
 
     if (!token) {
-        return res.status(405).json("Authorization Denied");
+        return res.status(201).json("Authorization Denied");
     }
 
     try {
@@ -299,6 +299,36 @@ app.post("/api/v1/airport/findbyname", async (req, res) => {
     }
 });
 
+app.post("/api/v1/route/departuretime", async (req, res) => {
+    try
+    {
+        const results = await db.query("SELECT departure_time FROM ROUTE WHERE id = $1", [req.body.route_id]);
+        res.status(200).json({
+            status: "success",
+            time : results.rows[0].departure_time
+        });
+    } catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
+app.post("/api/v1/route/arrivaltime", async (req, res) => {
+    try
+    {
+        const results = await db.query("SELECT arrival_time FROM ROUTE WHERE id = $1", [req.body.route_id]);
+        res.status(200).json({
+            status: "success",
+            time : results.rows[0].arrival_time
+        });
+    } catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
 app.get("/api/v1/airports", async (req, res) => {
     try
     {
@@ -324,7 +354,6 @@ app.get("/api/v1/airports", async (req, res) => {
 //get all restaurants
 app.post("/api/v1/transit", async (req, res) => {
     try{
-        console.log(req.body);
         const results = await db.query("SELECT * FROM FindAirplaneTransitPaths($1, $2, $3::DATE, upper($4))", [req.body.start_airport_id, req.body.end_airport_id, req.body.date, req.body.seat_type]);
         res.status(200).json({
             status: "success",
@@ -346,6 +375,17 @@ app.post("/api/v1/route/seats", async (req, res ) => {
     {
         let results;
         let x;
+        x = await db.query("SELECT count(*) FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
+        if(!x.rows[0].count);
+        {
+            await db.query("INSERT INTO SEAT_INFO (route_id, journeydate, seatleft_business, seatleft_commercial, cost_business, cost_commercial) values "+
+            "($1, $2, (select business_seat from airplane where id = (select airplane_id from route where id = $1)), "+
+            "(select commercial_seat from airplane where id = (select airplane_id from route where id = $1)), "+
+            "((select business_seat from airplane where id = (select airplane_id from route where id = $1))*(select cost_per_km_business "+
+            "from airplane where id = (select airplane_id from route where id = $1))), "+
+            "((select commercial_seat from airplane where id = "+
+            "(select airplane_id from route where id = $1))*(select cost_per_km_commercial from airplane where id = (select airplane_id from route where id = $1))))", [req.body.route_id, req.body.date]);
+        }
         if (req.body.seat_type == "commercial")
         {
             results = await db.query("SELECT seatleft_commercial FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);

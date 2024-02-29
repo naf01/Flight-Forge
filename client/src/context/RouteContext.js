@@ -3,17 +3,16 @@ import React, { useState, createContext } from 'react';
 export const RouteContext = createContext();
 
 export const RouteContextProvider = (props) => {
-
-    const [Routes, setRoutes] = useState([]);
+    const [transitInfo, setTransitInfo] = useState([]);
+    const [selectedTransit, setSelectedTransit] = useState(null);
 
     const addRoute = (route) => {
-        setRoutes([...Routes, route]);
+        setTransitInfo([...transitInfo, route]);
     };
 
     return (
-        <RouteContext.Provider value={{Routes, setRoutes, addRoute}}>
+        <RouteContext.Provider value={{ transitInfo, setTransitInfo, selectedTransit, setSelectedTransit }}>
             {props.children}
         </RouteContext.Provider>
-    )
-
+    );
 };
