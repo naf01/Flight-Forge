@@ -113,7 +113,10 @@ const CreateAccount = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Zipcode:</label>
-                                    <input type="number" className="form-control" value={zipcode} onChange={(e) => setZipcode(e.target.value)} required />
+                                    <input type="number" className="form-control" value={zipcode} onChange={(e) => {
+                                        if(e.target.value > 0) setZipcode(e.target.value);
+                                        else setZipcode(1206);
+                                    }} required />
                                 </div>
                                 <button type="button" className="btn btn-success mb-3" onClick={handleGeneratePassword}>Generate Password</button>
                                 <p>Generated Password: {generatedPassword}</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate
 import RouteFinder from '../apis/RouteFinder';
-import defaultprofileimage from 'D:/CP/Projects/Flight-Forge/client/src/assets/atika.jpeg';
+import defaultprofileimage from 'D:/CP/Projects/Flight-Forge/client/src/assets/logo.png';
 import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png';
 
 const UserProfile = () => {

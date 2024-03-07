@@ -401,7 +401,7 @@ app.post("/api/v1/route/seats", async (req, res ) => {
     try
     {
         let results;
-        let x;
+        let x, y;
         x = await db.query("SELECT id FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
         if(!x.rows.length)
         {
@@ -416,16 +416,23 @@ app.post("/api/v1/route/seats", async (req, res ) => {
             results = await db.query("SELECT seatleft_commercial FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
             x = results.rows[0].seatleft_commercial;
             if(x == null) x = 0;
+            results = await db.query("select luggage_commercial from airplane where id = (select airplane_id from route where id = $1)", [req.body.route_id]);
+            y = results.rows[0].luggage_commercial;
+            if(y == null) y = 10;
         }
         else
         {
             results = await db.query("SELECT seatleft_business FROM SEAT_INFO WHERE route_id = $1 and journeydate = $2", [req.body.route_id, req.body.date]);
             x = results.rows[0].seatleft_business;
             if(x == null) x = 0;
+            results = await db.query("select luggage_business from airplane where id = (select airplane_id from route where id = $1)", [req.body.route_id]);
+            y = results.rows[0].luggage_business;
+            if(y == null) y = 10;
         }
         res.status(200).json({
             status: "success",
-            seat : x
+            seat : x,
+            luggage : y
         });
     }
     catch (err){

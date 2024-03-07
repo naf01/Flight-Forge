@@ -23,11 +23,33 @@ const Home = () => {
             backgroundPosition: 'center',
             minHeight: '100vh', // Ensures the background covers the entire viewport height
             paddingTop: '10px', // Adjust the top padding as needed
-            // You can add more styles as needed
+            display: 'flex', // Use flexbox
+            flexDirection: 'column' // Column direction for flexbox
         }}>
             <Header isLoggedIn={isLoggedIn} handleSignOut={handleSignOut} />
             <SearchRoute/>
             <RouteList/>
+            
+            {/* Ash-colored box at the bottom */}
+            <div style={{
+                backgroundColor: '#F5F5F5', // Ash color background
+                padding: '5%', // Add padding for content
+                marginTop: 'auto' // Move the box to the bottom
+            }}>
+                <div className="row">
+                    <div className="col">
+                        <h5>Website Information</h5>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non feugiat sapien. Proin id fermentum sem. Duis in bibendum quam, et euismod velit.</p>
+                    </div>
+                </div>
+                <div className="row mt-3">
+                    <div className="col">
+                        <p>
+                            <Link to="/airline/login" className="text-primary">Wanna be an airline company?</Link>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

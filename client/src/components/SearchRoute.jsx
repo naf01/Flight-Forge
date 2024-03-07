@@ -5,7 +5,7 @@ import { RouteContext } from '../context/RouteContext';
 import RouteFinder from '../apis/RouteFinder';
 
 class TransitInfo {
-  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost) {
+  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage) {
       this.transit = transit;
       this.date = date;
       this.airport = airport;
@@ -15,6 +15,7 @@ class TransitInfo {
       this.seatsLeft = seatsLeft;
       this.distance = distance;
       this.cost = cost;
+      this.luggage = luggage;
   }
 }
 
@@ -210,11 +211,13 @@ const SearchRoute = () => {
         let seats_left = [], seat=0;
         let totaldistance = [], dist = 0.0;
         let totalcost = [], cost = 0;
+        let luggae_hold = [], luggage = 0;
 
         for(let i=0;i<modifiedTransit.length;i++){
             seat = 1000000;
             dist = 0;
             cost = 0;
+            luggage = 1000;
             for(let j=0;j<modifiedRoutes[i].length;j++){
               //console.log(modifiedRoutes[i][j], modifiedDates[i][j], ticketClass);
                 let response3 = await RouteFinder.post('/route/seats', {
@@ -225,6 +228,9 @@ const SearchRoute = () => {
                 if(response3.data.seat < seat){
                     seat = response3.data.seat;
                     console.log(response3.data);
+                }
+                if(response3.data.luggage < luggage){
+                  luggage = response3.data.luggage;
                 }
 
                 response3 = await RouteFinder.post('/route/distanceandcost', {
@@ -241,6 +247,8 @@ const SearchRoute = () => {
             }
             if(seat == 1000000) seats_left.push(0);
             else seats_left.push(seat);
+            if(luggage == 1000) luggae_hold.push(0);
+            else luggae_hold.push(luggage);
             if(!dist) dist = 0.0;
             totaldistance.push(dist);
             if(!cost) cost = 0;
@@ -261,7 +269,7 @@ const SearchRoute = () => {
         const Ti = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
-            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i]));
+            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i]));
         }
         console.log(Ti);
 
@@ -328,13 +336,13 @@ const SearchRoute = () => {
                 size={5} // Set the visible number of options
                 onChange={(e) => {
                   handleStartAirportSelection(e);
-                  setStartSuggestedAirports([]); // Clear suggestions after selection
+                  setStartSuggestedAirports([]);
                 }}
                 onBlur={() => setShowStartSuggestions(false)} // Close the dropdown on blur
               >
                 {startSuggestedAirports.map((airport) => {
                   // Split the address string by comma and get the first part (city)
-                  const city = airport.address.split(',')[0].trim();
+                  const city = (airport.address.split(',')[0].trim()).split('(')[1].trim();
 
                   return (
                     <option 
@@ -353,7 +361,7 @@ const SearchRoute = () => {
                           display: 'block',
                           padding: '5px',
                           cursor: 'pointer',
-                          backgroundColor: '#f2f2f2', // Change background color on hover
+                          backgroundColor: '#f2f2f2'
                         }}
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#e0e0e0'} // Change background color on hover
                         onMouseLeave={(e) => e.target.style.backgroundColor = '#f2f2f2'} // Reset background color on hover out
@@ -412,7 +420,7 @@ const SearchRoute = () => {
               >
                 {endSuggestedAirports.map((airport) => {
                   // Split the address string by comma and get the first part (city)
-                  const city = airport.address.split(',')[0].trim();
+                  const city = (airport.address.split(',')[0].trim()).split('(')[1].trim();
 
                   return (
                     <option 

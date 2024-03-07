@@ -13,6 +13,7 @@ const RouteList = () => {
     const [arrivalTimes, setArrivalTimes] = useState([]);
     const [expandedTransit, setExpandedTransit] = useState(null);
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [selectedLuggage, setSelectedLuggage] = useState(null);
 
     useEffect(() => {
         const fetchTimes = async () => {
@@ -81,11 +82,15 @@ const RouteList = () => {
         );
     };
 
+    // When sorting is applied, update the URL parameters
     const sortTransit = (type) => {
         let sortedTransit = [...transitInfo];
         switch (type) {
             case 'cost':
                 sortedTransit.sort((a, b) => a.cost - b.cost);
+                break;
+            case 'luggage':
+                sortedTransit.sort((a, b) => a.luggage - b.luggage);
                 break;
             case 'transit':
                 sortedTransit.sort((a, b) => a.route.length - b.route.length);
@@ -97,7 +102,21 @@ const RouteList = () => {
                 break;
         }
         setTransitInfo(sortedTransit);
+
+        // Update URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('sort', type);
+        window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
     };
+
+    // Parse URL parameters to retrieve sorting criteria on component mount
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortParam = urlParams.get('sort');
+        if (sortParam) {
+            sortTransit(sortParam);
+        }
+    }, []);
 
     return (
         <div>
@@ -111,8 +130,9 @@ const RouteList = () => {
                         {sortDropdownOpen && (
                             <div className="dropdown-content" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)', backgroundColor: 'white', borderRadius: '5px', position: 'absolute', top: '40px', right: '0', zIndex: '1' }}>
                                 <button onClick={() => { sortTransit('cost'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Cost</button>
-                                <button onClick={() => { sortTransit('transit'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Transit</button>
+                                <button onClick={() => { sortTransit('luggage'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Luggage</button>
                                 <button onClick={() => { sortTransit('duration'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Duration</button>
+                                <button onClick={() => { sortTransit('transit'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Transit</button>
                             </div>
                         )}
                     </div>
@@ -133,7 +153,7 @@ const RouteList = () => {
                     </div>
 
                     {currentEntries.map((transit, index) => (
-                        <div key={index} className="card my-3">
+                        <div key={index} className="card my-3" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)' }}>
                             <div className="card-body">
                                 <div className="row">
                                     <div className="col">
@@ -154,6 +174,7 @@ const RouteList = () => {
                                 <p className="text-center font-weight-bold">{transit.route.length}</p>
                                 <p className="text-left font-weight-bold">Seat Left : {transit.seatsLeft}</p>
                                 <p className="text-left font-weight-bold">Total Distance : {transit.distance}</p>
+                                <p className="text-left font-weight-bold">Maximum Luggage : {transit.luggage}</p>
                                 <Link
                                     to="/bookticket"
                                     className={transit.seatsLeft === 0 ? 'btn btn-secondary float-right' : 'btn btn-danger float-right'}
@@ -184,6 +205,7 @@ const RouteList = () => {
             ) : (
                 <div style={{ paddingTop: '30px' }}><h3 style={{ textAlign: 'center', fontFamily: 'cursive' }}>{clicked}</h3></div>
             )}
+            <div style={{padding:'5%'}}></div>
         </div>
     );
 };
