@@ -78,16 +78,16 @@ app.post("/api/v1/user/authenticate", async (req, res) => {
 app.post("/api/v1/user/signup", async (req, res) => {
     try {
         console.log(req.body);
-        const { first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, email } = req.body;
+        const { first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, email, passportnumber } = req.body;
 
         // Assuming you have the sha256 function available for hashing the password
         const hashedPassword = sha256(password);
 
         const results = await db.query(
-            `INSERT INTO APP_USER (first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, age, email)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CalculateAge($3), $9)
+            `INSERT INTO APP_USER (first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, age, email, passportnumber)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CalculateAge($3), $9, $10)
             RETURNING *`,
-            [first_name, last_name, dateofbirth, mobileno, hashedPassword, city, country, zipcode, email]
+            [first_name, last_name, dateofbirth, mobileno, hashedPassword, city, country, zipcode, email, passportnumber]
         );
 
         //const jwtToken = jwtGenerator(results.rows[0].id);
@@ -194,23 +194,38 @@ app.post("/api/v1/user/profiledata", authorize, async (req, res) => {
 app.post("/api/v1/user/buyticket", async (req, res) => {
     try
     {
-        const { route_id, date, seat_type, user_id, transaction_id } = req.body;
-        const results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5)", [route_id, user_id, transaction_id, date, seat_type]);
-        console.log(results.rows);
-        if(results.rows[0].buyticket > 0)
+        const route_id = [];
+        const date = [];
+        const { master_user, seat_type, transaction_id, name, email, passportnumber, country, city, dateofbirth } = req.body;
+        for(let i = 0; i < req.body.route_id.length; i++)
         {
-            res.status(200).json({
-                status: "success",
-                results: results.rows.length,
-                ticket_id : results.rows[0].buyticket
-            });
+            route_id.push(req.body.route_id[i]);
         }
-        else
+        for(let i = 0; i < req.body.date.length; i++)
         {
-            res.status(201).json({
-                status: "failed"
-            });
+            date.push(req.body.date[i]);
         }
+
+        let results = await db.query('select id from non_user where $1=fullname and $2=email', [name, email]);
+        if(results.rows.length == 0) results = await db.query('insert into non_user (id, fullname, email, passportnumber, country, city, dateofbirth, master_user) values (1, $1, $2, $3, $4, $5, $6::DATE, $7) returning id', [name, email, passportnumber, country, city, dateofbirth, master_user]);
+        let non_user = results.rows[0].id;
+
+        let tickets = [];
+
+        for(let i = 0; i < route_id.length; i++)
+        {
+            results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5, $6)", [route_id[i], master_user, transaction_id, date[i], seat_type, non_user]);
+            tickets.push(results.rows[0].buyticket);
+        }
+
+        results = await db.query('insert into user_ticket (tickets, user_id) values (($1), $2) returning *', [tickets, master_user]);
+
+        res.status(200).json({
+            status: "success"
+        });
+
+        //const results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5)", [route_id, master_user, transaction_id, date, seat_type]);
+        
     } catch (err){
         res.status(201).json({
             status: "failed"

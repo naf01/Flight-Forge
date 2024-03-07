@@ -10,6 +10,7 @@ const BookTicket = () => {
     const [error, setError] = useState('');
     const [authenticated, setAuthenticated] = useState(false);
     const [transactionId, setTransactionId] = useState('');
+    const [userId, setUserId] = useState('');
     const [userData, setUserData] = useState(null);
     const [travelersInfo, setTravelersInfo] = useState([]);
     const navigate = useNavigate();
@@ -36,15 +37,16 @@ const BookTicket = () => {
                         token: token
                     });
 
+                    setUserId(response.data.data.user.id);
+
                     let user = response.data.data.user;
                     let dateParts = user.dateofbirth.split('-');
-                    let formattedDate = dateParts[0] + '-' + dateParts[1] + '-' + dateParts[2].split('T')[0];;
-                    console.log(user.address);
+                    let formattedDate = dateParts[0] + '-' + dateParts[1] + '-' + dateParts[2].split('T')[0];
                     setUserData({
                         name: user.first_name + ' ' + user.last_name,
                         dob: formattedDate,
                         email: user.email,
-                        country: user.addres,
+                        country: user.country,
                         city: user.city,
                         passportnumber: user.passportnumber
                     });
@@ -61,8 +63,54 @@ const BookTicket = () => {
     }, []);
 
     const handleBookTicket = () => {
-        // Handle booking logic here
-    };
+        // Check if all required fields for each traveler are filled
+        const isDataValid = travelersInfo.every(traveler => {
+            return traveler.name && traveler.dob && traveler.email && traveler.country && traveler.city;
+        });
+    
+        if (isDataValid) {
+            const transactionId = prompt('Please enter the transaction ID:');
+            if (transactionId !== null && transactionId !== '') {
+                setTransactionId(transactionId);
+                alert(`Transaction ID entered: ${transactionId}`);
+                
+                try {
+                    for(let i = 0; i < seatsToBook; i++) {
+                        const traveler = travelersInfo[i];
+                        try {
+                            console.log(`Traveler ${i + 1}:`, traveler);
+                            console.log('Selected Transit:', selectedTransit);
+                            const response = RouteFinder.post('/user/buyticket', {
+                                name: traveler.name,
+                                email: traveler.email,
+                                passportnumber: traveler.passportnumber,
+                                country: traveler.country,
+                                city: traveler.city,
+                                dateofbirth: traveler.dob,
+                                seat_type: selectedTransit.seat_type,
+                                transaction_id: transactionId,
+                                route_id: selectedTransit.route,
+                                date: selectedTransit.date,
+                                master_user: userId,
+                                non_user: i
+                            });
+                            console.log(response);
+                        } catch (error) {
+                            console.log(`Ticket booking failed for Traveler ${traveler.name}. Please try again.`)
+                        }
+                    }   
+                } catch (error) {
+                    
+                }
+
+                //navigate('/');
+            } else {
+                alert('Transaction ID not provided. Ticket booking cancelled.');
+            }
+        } else {
+            alert('Please provide all required information for each traveler.');
+        }
+    };    
 
     const handleGoToHome = () => {
         navigate('/');
@@ -70,22 +118,8 @@ const BookTicket = () => {
 
     const handleSignOut = () => {
         localStorage.removeItem('token');
-        navigate('/login');
-    };
-
-    const handleInputChange = (index, event) => {
-        const { name, value } = event.target;
-        const list = [...travelersInfo];
-        list[index][name] = value;
-        setTravelersInfo(list);
-        // Update userData if the traveler info is updated
-        if (index === 0) {
-            setUserData(prevUserData => ({
-                ...prevUserData,
-                [name]: value
-            }));
-        }
-    };
+        navigate('/');
+    };        
 
     useEffect(() => {
         const newList = [];
@@ -176,36 +210,59 @@ const BookTicket = () => {
                                 <option value="DebitCard">Debit Card</option>
                             </select>
                         </div>
-                        {/* Input fields for traveler information */}
+                        <div style={{padding:'30px'}}></div>
                         {travelersInfo.map((traveler, index) => (
-                            <div key={index} className="card mb-3" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)' }}>
+                            <div key={index} className="card mb-3" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)', padding: '10px', width: '50%'}}>
                                 <div className="card-body">
                                     <h5 className="card-title">Traveler {index + 1}</h5>
                                     <div className="mb-3">
                                         <label className="form-label">Name</label>
-                                        <input type="text" className="form-control" name="name" value={traveler?.name || ''} readOnly={index === 0 ? true : false} onChange={(e) => handleInputChange(index, e)} />
+                                        <input type="text" className="form-control" name="name" value={traveler?.name || ''} readOnly={index === 0 ? true : false} onChange={(e) => {
+                                            const updatedTravelersInfo = [...travelersInfo];
+                                            updatedTravelersInfo[index] = {...traveler, name: e.target.value};
+                                            setTravelersInfo(updatedTravelersInfo);
+                                        }} required/>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Date of Birth</label>
-                                        <input type="date" className="form-control" name="dob" value={traveler?.dob || ''} readOnly={index === 0 ? true : false} onChange={(e) => handleInputChange(index, e)} />
+                                        <input type="date" className="form-control" name="dob" value={traveler?.dob || ''} readOnly={index === 0 ? true : false} onChange={(e) => {
+                                            const updatedTravelersInfo = [...travelersInfo];
+                                            updatedTravelersInfo[index] = {...traveler, dob: e.target.value};
+                                            setTravelersInfo(updatedTravelersInfo);
+                                        }} required/>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Email</label>
-                                        <input type="email" className="form-control" name="email" value={traveler?.email || ''} readOnly={index === 0 ? true : false} onChange={(e) => handleInputChange(index, e)} />
+                                        <input type="email" className="form-control" name="email" value={traveler?.email || ''} readOnly={index === 0 ? true : false} onChange={(e) => {
+                                            const updatedTravelersInfo = [...travelersInfo];
+                                            updatedTravelersInfo[index] = {...traveler, email: e.target.value};
+                                            setTravelersInfo(updatedTravelersInfo);
+                                        }} required/>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Country</label>
-                                        <input type="country" className="form-control" name="email" value={traveler?.email || ''} readOnly={index === 0 ? true : false} onChange={(e) => handleInputChange(index, e)} />
+                                        <input type="text" className="form-control" name="country" value={traveler?.country || ''} readOnly={index === 0 ? true : false} onChange={(e) => {
+                                            const updatedTravelersInfo = [...travelersInfo];
+                                            updatedTravelersInfo[index] = {...traveler, country: e.target.value};
+                                            setTravelersInfo(updatedTravelersInfo);
+                                        }} required/>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">City</label>
-                                        <input type="city" className="form-control" name="email" value={traveler?.email || ''} readOnly={index === 0 ? true : false} onChange={(e) => handleInputChange(index, e)} />
+                                        <input type="text" className="form-control" name="city" value={traveler?.city || ''} readOnly={index === 0 ? true : false} onChange={(e) => {
+                                            const updatedTravelersInfo = [...travelersInfo];
+                                            updatedTravelersInfo[index] = {...traveler, city: e.target.value};
+                                            setTravelersInfo(updatedTravelersInfo);
+                                        }} required/>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Passport Number</label>
-                                        <input type="passportnumber" className="form-control" name="email" value={traveler?.email || ''} readOnly={index === 0 ? true : false} onChange={(e) => handleInputChange(index, e)} />
+                                        <input type="text" className="form-control" name="passportnumber" value={traveler?.passportnumber || ''} readOnly={index === 0 ? true : false} onChange={(e) => {
+                                            const updatedTravelersInfo = [...travelersInfo];
+                                            updatedTravelersInfo[index] = {...traveler, passportnumber: e.target.value};
+                                            setTravelersInfo(updatedTravelersInfo);
+                                        }} />
                                     </div>
-                                    {/* Add more fields as needed */}
                                 </div>
                             </div>
                         ))}

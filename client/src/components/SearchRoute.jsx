@@ -5,7 +5,7 @@ import { RouteContext } from '../context/RouteContext';
 import RouteFinder from '../apis/RouteFinder';
 
 class TransitInfo {
-  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage) {
+  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage, seat_type) {
       this.transit = transit;
       this.date = date;
       this.airport = airport;
@@ -16,6 +16,7 @@ class TransitInfo {
       this.distance = distance;
       this.cost = cost;
       this.luggage = luggage;
+      this.seat_type = seat_type;
   }
 }
 
@@ -269,7 +270,7 @@ const SearchRoute = () => {
         const Ti = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
-            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i]));
+            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i], ticketClass));
         }
         console.log(Ti);
 

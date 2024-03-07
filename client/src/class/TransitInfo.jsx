@@ -1,5 +1,5 @@
 class TransitInfo {
-    constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost) {
+    constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage, seat_type) {
         this.transit = transit;
         this.date = date;
         this.airport = airport;
@@ -9,6 +9,8 @@ class TransitInfo {
         this.seatsLeft = seatsLeft;
         this.distance = distance;
         this.cost = cost;
+        this.luggage = luggage;
+        this.seat_type = seat_type;
     }
 }
 

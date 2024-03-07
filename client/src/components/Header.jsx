@@ -1,7 +1,7 @@
 // Header.jsx
 import React, { useEffect, useState  } from 'react';
 import { Link } from 'react-router-dom';
-import logoImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png'; // Import your logo image file
+import logoImage from '../assets/tlogo.png'; // Import your logo image file
 import RouteFinder from '../apis/RouteFinder';
 
 const Header = ({handleSignOut }) => {

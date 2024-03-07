@@ -8,8 +8,7 @@ function jwtGenerator(user_id) {
             id: user_id
         }
     };
-    console.log("inside : " + jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" }));
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "30m" });
 }
 
 module.exports = jwtGenerator;

@@ -13,6 +13,7 @@ const CreateAccount = () => {
     const [city, setCity] = useState('');
     const [country, setCountry] = useState('');
     const [zipcode, setZipcode] = useState('');
+    const [passportnumber, setPassportnumber] = useState('');
     const [error, setError] = useState('');
     const [generatedPassword, setGeneratedPassword] = useState('');
     const navigate = useNavigate(); 
@@ -47,14 +48,16 @@ const CreateAccount = () => {
                 city: city,
                 country: country,
                 zipcode: parseInt(zipcode),
-                email: email
+                email: email,
+                passportnumber: parseInt(passportnumber)
             });
             
             if (response.status === 200) {
                 const token = response.data.data.token;
                 localStorage.setItem('token', token);
-                navigate("/");
+                navigate("/userprofile");
             }
+            else console.log(response);
 
         } catch (err) {
             setError('Failed to create account. Please try again.');
@@ -113,10 +116,15 @@ const CreateAccount = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Zipcode:</label>
-                                    <input type="number" className="form-control" value={zipcode} onChange={(e) => {
-                                        if(e.target.value > 0) setZipcode(e.target.value);
-                                        else setZipcode(1206);
+                                    <input  className="form-control" value={zipcode} onChange={(e) => {
+                                        //if(e.target.value > 0) setZipcode(e.target.value);
+                                        //else setZipcode(1206);
+                                        setZipcode(e.target.value);
                                     }} required />
+                                    <label>Passport:</label>
+                                    <input className="form-control" value={passportnumber} onChange={(e) => {
+                                        setPassportnumber(e.target.value);
+                                    }} />
                                 </div>
                                 <button type="button" className="btn btn-success mb-3" onClick={handleGeneratePassword}>Generate Password</button>
                                 <p>Generated Password: {generatedPassword}</p>
