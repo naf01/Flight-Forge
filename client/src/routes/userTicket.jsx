@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Route, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import RouteFinder from '../apis/RouteFinder';
 
 const UserTicket = () => {
@@ -8,9 +8,24 @@ const UserTicket = () => {
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const [ticketsPerPage, setTicketsPerPage] = useState(5);
+    const [isUpcoming, setIsUpcoming] = useState(true);
+    const [filteredTickets, setFilteredTickets] = useState([]);
+    const [currentTickets, setCurrentTickets] = useState([]);
 
     useEffect(() => {
         const fetchUserTickets = async () => {
+            try {
+                const response = await RouteFinder.post('/user/authenticate', {
+                    token: localStorage.getItem('token')
+                });
+                console.log(response.status);
+                if (response.status !== 200) {
+                    navigate('/');
+                }
+            } catch (error) {
+                navigate('/');
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
@@ -31,60 +46,89 @@ const UserTicket = () => {
         };
 
         fetchUserTickets();
-    }, []);
+    }, [navigate]);
+
+    useEffect(() => {
+        setFilteredTickets(tickets.filter(transit => 
+            isUpcoming ? 
+            new Date(transit[0].journeydate) >= new Date() :
+            new Date(transit[0].journeydate) < new Date()
+        ));
+    }, [tickets, isUpcoming]);
+
+    useEffect(() => {
+        const startIndex = (currentPage - 1) * ticketsPerPage;
+        const endIndex = startIndex + ticketsPerPage;
+        setCurrentTickets(filteredTickets.slice(startIndex, endIndex));
+    }, [currentPage, filteredTickets, ticketsPerPage]);
 
     const handleSignOut = () => {
         localStorage.removeItem('token');
         navigate('/');
     };
 
-    const handleReview = async (routeId) => {
-        const reviewMessage = prompt('Please provide your review message (max 255 characters):');
-        if (reviewMessage === null) {
-            // User canceled the prompt
-            return;
-        }
-        if (reviewMessage.length > 255) {
-            alert('Review message should not exceed 255 characters.');
-            return;
-        }
-        const rating = prompt('Please provide your rating (out of 5):');
-        if (rating === null) {
-            // User canceled the prompt
-            return;
-        }
-        const numericRating = parseFloat(rating);
-        if (isNaN(numericRating) || numericRating < 0 || numericRating > 5) {
-            alert('Please provide a valid rating between 0 and 5.');
-            return;
-        }
-
-        // Now you can send the review to your backend API
-        try {
-            const token = localStorage.getItem('token');
-            console.log('routeId:', routeId);
-            const response = await RouteFinder.post('/user/review', {
-                id: 0,
-                token: token,
-                route_id: routeId,
-                message: reviewMessage,
-                rating: numericRating
-            });
-            if (response.status === 200) {
-                alert('Review submitted successfully.');
-                // Optionally, you can update the UI to reflect the submitted review
-            } else {
-                alert('Failed to submit review. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error submitting review:', error);
-            alert('Failed to submit review. Please try again.');
-        }
+    const handleReview = async (routeId, airplanename) => {
+        localStorage.setItem('route_id', routeId);
+        localStorage.setItem('airplane_name', airplanename);
+        navigate(`/review`);
     };
 
-    const indexOfLastTicket = currentPage * ticketsPerPage;
-    const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
-    const currentTickets = tickets.slice(indexOfFirstTicket, indexOfLastTicket);
+    const renderPageNumbers = () => {
+        const pageNumbers = [];
+        for (let i = 1; i <= Math.ceil(filteredTickets.length / ticketsPerPage); i++) {
+            pageNumbers.push(i);
+        }
+
+        return pageNumbers.map(number => (
+            <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
+                <a onClick={() => handlePageChange(number)} className="page-link">
+                    {number}
+                </a>
+            </li>
+        ));
+    };
+
+    const formatDate = (dateString) => {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+        const date = new Date(dateString);
+        const dayOfWeek = days[date.getDay()];
+        const dayOfMonth = date.getDate();
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+      
+        return `${dayOfWeek}, ${dayOfMonth} ${month}, ${year}`;
+    };
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+        setCurrentTickets([]);
+    };
+
+    const handleReturnTicket = async (ticket) => {
+        const confirmReturn = window.confirm('Are you sure you want to return this ticket? 75% amount will be refunded.');
+        if (confirmReturn) {
+            try {
+                const response = await RouteFinder.post('/user/returnticket', {
+                    id: 0,
+                    iid: ticket.ticket_id,
+                    token: localStorage.getItem('token')
+                });
+                if (response.status === 200) {
+                    alert('Ticket returned successfully.');
+                    window.location.reload();
+                } else {
+                    alert('Failed to return ticket. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error returning ticket:', error);
+                alert('Failed to return ticket. Please try again.');
+            }
+        } else {
+            alert('Ticket return canceled by user.');
+        }
+    };
 
     const renderTicketTables = () => {
         return (
@@ -95,7 +139,7 @@ const UserTicket = () => {
                             <h5 className="card-title">User Info</h5>
                             <table className="table table-striped">
                                 <tbody>
-                                    <tr>
+                                <tr>
                                         <td>Fullname:</td>
                                         <td>{transit[0].fullname}</td>
                                     </tr>
@@ -105,7 +149,7 @@ const UserTicket = () => {
                                     </tr>
                                     <tr>
                                         <td>Date of Birth:</td>
-                                        <td>{transit[0].dateofbirth}</td>
+                                        <td>{formatDate(transit[0].dateofbirth.split('T')[0].trim())}</td>
                                     </tr>
                                     <tr>
                                         <td>Country:</td>
@@ -151,7 +195,7 @@ const UserTicket = () => {
                                             <td>{ticket.transactionid}</td>
                                             <td>
                                                 {new Date() - new Date(ticket.journeydate) > 1000 * 60 * 60 * 24 ? (
-                                                    <button className="btn btn-primary" onClick={() => handleReview(ticket.route_id)}>Give a review</button>
+                                                    <button className="btn btn-primary" onClick={() => handleReview(ticket.route_id, ticket.airplanename)}>Give a review</button>
                                                 ) : (
                                                     <button className="btn btn-secondary" disabled>Take Our Flight First</button>
                                                 )}
@@ -165,57 +209,6 @@ const UserTicket = () => {
                 ))}
             </div>
         );
-    };                  
-
-    const handleReturnTicket = async (ticket) => {
-        const confirmReturn = window.confirm('Are you sure you want to return this ticket?');
-        if (confirmReturn) {
-            try {
-                const response = await RouteFinder.post('/user/returnticket', {
-                    id: ticket.id,
-                });
-                if (response.status === 200) {
-                    alert('Ticket returned successfully.');
-                    window.location.reload();
-                } else {
-                    alert('Failed to return ticket. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error returning ticket:', error);
-                alert('Failed to return ticket. Please try again.');
-            }
-        } else {
-            alert('Ticket return canceled by user.');
-        }
-    };    
-
-    const pageNumbers = [];
-    for (let i = 1; i <= Math.ceil(tickets.length / ticketsPerPage); i++) {
-        pageNumbers.push(i);
-    }
-
-    const renderPageNumbers = pageNumbers.map(number => (
-        <li key={number} className="page-item">
-            <a onClick={() => setCurrentPage(number)} href="!#" className="page-link">
-                {number}
-            </a>
-        </li>
-    ));
-
-    const handleTicketsPerPageChange = e => {
-        setTicketsPerPage(parseInt(e.target.value));
-    };
-
-    const nextPage = () => {
-        if (currentPage < Math.ceil(tickets.length / ticketsPerPage)) {
-            setCurrentPage(currentPage + 1);
-        }
-    };
-
-    const prevPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(currentPage - 1);
-        }
     };
 
     return (
@@ -223,7 +216,7 @@ const UserTicket = () => {
             <Link style={{
                 color: 'white', 
                 backgroundColor: '#800000', 
-                padding: '15px 20px', // Adjust padding here
+                padding: '15px 20px', 
                 borderRadius: '5px',
                 cursor: 'pointer',
                 textDecoration: 'none', 
@@ -237,7 +230,7 @@ const UserTicket = () => {
             <button style={{
                 color: 'white', 
                 backgroundColor: '#800000', 
-                padding: '15px 20px', // Adjust padding here
+                padding: '15px 20px', 
                 borderRadius: '5px',
                 cursor: 'pointer',
                 textDecoration: 'none', 
@@ -251,27 +244,28 @@ const UserTicket = () => {
 
             <div className="container mt-4" style={{width: '21%', padding: '3%'}}>
                 <div className="card text-center p-3 shadow-lg bg-light">
-                    <select onChange={handleTicketsPerPageChange} className="form-select form-select-lg">
+                    <select onChange={e => setTicketsPerPage(parseInt(e.target.value))} className="form-select form-select-lg">
                         <option value="5">5 Tickets Per Page</option>
                         <option value="10">10 Tickets Per Page</option>
                         <option value="100">100 Tickets Per Page</option>
                     </select>
                 </div>
             </div>
-            <div className="text-center" style={{ paddingBottom: '3%'}}>
-                <button className="btn btn-primary shadow mr-2" onClick={prevPage}>Previous</button>
-                <span>Page {currentPage} out of {Math.ceil(tickets.length / ticketsPerPage)}</span>
-                <button className="btn btn-primary shadow ml-2" onClick={nextPage}>Next</button>
+            <div className="text-right">
+                <button onClick={() => setIsUpcoming(true)} className={`btn ${isUpcoming ? 'btn-primary' : 'btn-secondary'} mr-2`}>Upcoming</button>
+                <button onClick={() => setIsUpcoming(false)} className={`btn ${isUpcoming ? 'btn-secondary' : 'btn-primary'}`}>Ticket Archive</button>
             </div>
             {error && <p>Error: {error}</p>}
             {tickets.length > 0 ? (
                 <div>
+                    <div className="text-center">
+                        <nav aria-label="Page navigation example">
+                            <ul className="pagination justify-content-center">
+                                {renderPageNumbers()}
+                            </ul>
+                        </nav>
+                    </div>
                     {renderTicketTables()}
-                    <nav aria-label="Page navigation example">
-                        <ul className="pagination">
-                            {renderPageNumbers}
-                        </ul>
-                    </nav>
                 </div>
             ) : (
                 <p>No tickets found.</p>

@@ -28,6 +28,9 @@ const Home = () => {
         }}>
             <Header isLoggedIn={isLoggedIn} handleSignOut={handleSignOut} />
             <SearchRoute/>
+            <div style={{paddingLeft: '14%', width: '86%', fontFamily:'-moz-initial', fontSize:'1.4rem', color: 'red'}}>
+                <marquee behavior="scroll" direction="left">!!! Notice: Users can return tickets up to 10 days before the scheduled departure date. In case of a return, a 25% deduction will be applied to the refunded amount.</marquee>
+            </div>
             <RouteList/>
             
             {/* Ash-colored box at the bottom */}

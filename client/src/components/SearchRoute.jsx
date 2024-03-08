@@ -5,7 +5,7 @@ import { RouteContext } from '../context/RouteContext';
 import RouteFinder from '../apis/RouteFinder';
 
 class TransitInfo {
-  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage, seat_type, costlist) {
+  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage, seat_type, costlist, rating) {
       this.transit = transit;
       this.date = date;
       this.airport = airport;
@@ -18,6 +18,7 @@ class TransitInfo {
       this.luggage = luggage;
       this.seat_type = seat_type;
       this.costlist = costlist;
+      this.rating = rating;
   }
 }
 
@@ -215,6 +216,7 @@ const SearchRoute = () => {
         let totalcost = [], cost = 0;
         let luggae_hold = [], luggage = 0;
         let costlist = [], ticketcost = [];
+        let ratinglist = [], rating = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
             seat = 1000000;
@@ -222,8 +224,11 @@ const SearchRoute = () => {
             cost = 0;
             luggage = 1000;
             for(let j=0;j<modifiedRoutes[i].length;j++){
+                let response3 = await RouteFinder.post('/airplanerating', {airplane_id: modifiedAirplanesid[i][j]});
+                rating.push(response3.data.rating);
+                console.log(response3.data);
               //console.log(modifiedRoutes[i][j], modifiedDates[i][j], ticketClass);
-                let response3 = await RouteFinder.post('/route/seats', {
+                response3 = await RouteFinder.post('/route/seats', {
                     route_id: modifiedRoutes[i][j],
                     date: modifiedDates[i][j],
                     seat_type: ticketClass
@@ -250,6 +255,8 @@ const SearchRoute = () => {
                   dist = dist + response3.data.distance;
                 }
             }
+            ratinglist.push(rating);
+            rating = [];
             costlist.push(ticketcost);
             ticketcost = [];
             if(seat == 1000000) seats_left.push(0);
@@ -276,7 +283,7 @@ const SearchRoute = () => {
         const Ti = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
-            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i], ticketClass, costlist[i]));
+            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i], ticketClass, costlist[i], ratinglist[i]));
         }
         console.log(Ti);
 
@@ -295,14 +302,14 @@ const SearchRoute = () => {
   return (
     <div className="mb-4" style={{ 
       backgroundColor: 'white', 
-      padding: '20px', 
+      padding: '30px', 
       borderRadius: '10px', 
       boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.75)',
       margin: '20px auto',
       width: '63%'
     }}>
       <form>
-        <div className="form-row mb-3">
+        <div className="form-row mb-3" style={{ fontFamily:'-moz-initial' }}>
           <div className="col" ref={startSelectRef}>
             <div style={{ position: 'relative' }}>
               <input
@@ -438,7 +445,8 @@ const SearchRoute = () => {
                         cursor: 'pointer',
                         borderBottom: '1px solid #ccc',
                         borderTop: '1px solid #ccc',
-                        backgroundColor: 'white', // Set default background color
+                        backgroundColor: 'white',
+                        fontFamily:'-moz-initial' 
                       }}
                     >
                       <span 
@@ -446,7 +454,8 @@ const SearchRoute = () => {
                           display: 'block',
                           padding: '5px',
                           cursor: 'pointer',
-                          backgroundColor: '#f2f2f2', // Change background color on hover
+                          backgroundColor: '#f2f2f2',
+                          fontFamily:'-moz-initial' 
                         }}
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#e0e0e0'} // Change background color on hover
                         onMouseLeave={(e) => e.target.style.backgroundColor = '#f2f2f2'} // Reset background color on hover out
@@ -460,7 +469,7 @@ const SearchRoute = () => {
             )}
           </div>
         </div>
-        <div className="form-row mb-3" style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="form-row mb-3" style={{ display: 'flex', alignItems: 'center',  fontFamily:'-moz-initial' }}>
           <div className="col" style={{ flex: '1' }}>
             <select
               value={ticketClass}
@@ -474,7 +483,7 @@ const SearchRoute = () => {
           </div>
         </div>
 
-        <div className="form-row mb-3">
+        <div className="form-row mb-3" style={{ fontFamily:'-moz-initial' }}>
           <div className="col">
           <div className="input-group">
             <DatePicker
@@ -511,19 +520,20 @@ const SearchRoute = () => {
         </div>
         <div className="form-row d-flex justify-content-center">
         <button 
-  onClick={handleSearch} 
-  className="btn btn-primary" 
-  style={{ 
-    backgroundColor: '#800000', 
-    borderColor: '#800000', 
-    fontSize: '1.2rem',
-    width: '18%', // Increase the width
-    transition: 'all 0.3s ease', // Add transition effect for all properties
-    '&:active': {
-      backgroundColor: '#660000', // Change background color on click
-      transform: 'scale(3)', // Scale down on click
-    }
-  }}>
+          onClick={handleSearch} 
+          className="btn btn-primary" 
+          style={{
+            fontFamily:'-moz-initial',
+            backgroundColor: '#800000', 
+            borderColor: '#800000', 
+            fontSize: '1.4rem',
+            width: '18%', // Increase the width
+            transition: 'all 0.3s ease', // Add transition effect for all properties
+            '&:active': {
+              backgroundColor: '#660000', // Change background color on click
+              transform: 'scale(3)'
+            }
+        }}>
   Search
 </button>
 

@@ -179,6 +179,9 @@ app.post("/api/v1/user/profiledata", authorize, async (req, res) => {
         if (results.rows.length === 0) {
             return res.status(404).json({ error: 'User not found or incorrect credentials.' });
         }
+        results.rows[0].dateofbirth = new Date(results.rows[0].dateofbirth);
+        results.rows[0].dateofbirth.setDate(results.rows[0].dateofbirth.getDate() + 1);
+        console.log(results.rows[0]);
 
         res.status(200).json({
             status: "success",
@@ -202,7 +205,7 @@ app.post("/api/v1/user/tickets", authorize, async (req, res) => {
             return res.status(400).json({ error: 'User ID or password not provided.' });
         }
 
-        const results = await db.query("SELECT * FROM user_ticket WHERE user_id = $1", [id]);
+        let results = await db.query("SELECT * FROM user_ticket WHERE user_id = $1", [id]);
         let results1;
         for(let i=0;i<results.rows.length;i++)
         {
@@ -210,7 +213,24 @@ app.post("/api/v1/user/tickets", authorize, async (req, res) => {
             for(let j=0;j<x.length;j++)
             {
                 results1 = await db.query("SELECT T.id as ticket_id, T.*, NU.* FROM ticket T join non_user NU on(T.boughtfor = NU.id) WHERE T.id = $1", [x[j]]);
+                results1.rows[0].ticket_id = results.rows[i].id;
                 Tin.push(results1.rows[0]);
+            }
+            for (let j = 0; j < Tin.length; j++) {
+                // Convert journeydate to a JavaScript Date object
+                Tin[j].journeydate = new Date(Tin[j].journeydate);
+                // Increment journeydate by 1 day
+                Tin[j].journeydate.setDate(Tin[j].journeydate.getDate() + 1);
+            
+                // Convert buydate to a JavaScript Date object
+                Tin[j].buydate = new Date(Tin[j].buydate);
+                // Increment buydate by 1 day
+                Tin[j].buydate.setDate(Tin[j].buydate.getDate() + 1);
+            
+                // Convert dateofbirth to a JavaScript Date object
+                Tin[j].dateofbirth = new Date(Tin[j].dateofbirth);
+                // Increment dateofbirth by 1 day
+                Tin[j].dateofbirth.setDate(Tin[j].dateofbirth.getDate() + 1);
             }
             Ti.push(Tin);
             Tin = [];
@@ -223,7 +243,7 @@ app.post("/api/v1/user/tickets", authorize, async (req, res) => {
         res.status(200).json({
             status: "success",
             data: {
-                ticketinfo: Ti // Assuming you expect only one user based on ID
+                ticketinfo: Ti
             }
         });
     } catch (err) {
@@ -249,9 +269,8 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
         }
 
         let results = await db.query('select id from non_user where $1=fullname and $2=email', [name, email]);
-        if(results.rows.length == 0) results = await db.query('insert into non_user (id, fullname, email, passportnumber, country, city, dateofbirth, master_user) values (1, $1, $2, $3, $4, $5, $6::DATE, $7) returning id', [name, email, passportnumber, country, city, dateofbirth, master_user]);
+        if(results.rows.length == 0) results = await db.query('insert into non_user (id, fullname, email, passportnumber, country, city, dateofbirth, master_user) values (1, $1, $2, $3, $4, $5, ($6::DATE), $7) returning id', [name, email, passportnumber, country, city, dateofbirth, master_user]);
         let non_user = results.rows[0].id;
-
         let tickets = [];
         console.log(route_id);
         try {
@@ -280,11 +299,11 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
     }
 });
 //ticket return
-app.post("/api/v1/user/returnticket", async (req, res) => {
+app.post("/api/v1/user/returnticket", authorize, async (req, res) => {
     try
     {
-        const { id } = req.body;
-        const results = await db.query("DELETE FROM user_ticket WHERE id = $1", [id]);
+        const { iid } = req.body;
+        await db.query("DELETE FROM user_ticket WHERE id = $1", [iid]);
         res.status(200).json({
             status: "success"
         });
@@ -545,6 +564,22 @@ app.post("/api/v1/route/distanceandcost", async (req, res ) => {
         });
     }
     catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
+//get airplane's rating
+app.post("/api/v1/airplanerating", async (req, res) => {
+    try
+    {
+        let results = await db.query("SELECT rating FROM airplane WHERE id = $1", [req.body.airplane_id]);
+        res.status(200).json({
+            status: "success",
+            rating : results.rows[0].rating
+        });
+    } catch (err){
         res.status(201).json({
             status: "failure"
         });

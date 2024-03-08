@@ -63,24 +63,47 @@ const RouteList = () => {
         return (
             <table className="table">
                 <thead>
-                    <tr>
-                        <th>Airplane Name</th>
-                        <th>Airport From</th>
-                        <th>Airport To</th>
-                    </tr>
+                <tr>
+                    <th style={{ fontFamily: '-moz-initial', fontSize: '18px' }}>Airplane Name</th>
+                    <th style={{ fontFamily: '-moz-initial', fontSize: '18px' }}>Airport From</th>
+                    <th style={{ fontFamily: '-moz-initial', fontSize: '18px' }}>Airport To</th>
+                    <th style={{ fontFamily: '-moz-initial', fontSize: '18px' }}>Rating</th>
+                </tr>
                 </thead>
                 <tbody>
                     {transit.airplanename.map((airplane, i) => (
                         <tr key={i}>
-                            <td>{airplane}</td>
-                            <td>{transit.airport[i]}</td>
-                            <td>{transit.airport[i + 1]}</td>
+                            <td style={{ fontFamily:'-moz-initial' }}>{airplane}</td>
+                            <td style={{ fontFamily:'-moz-initial' }}>{transit.airport[i]}</td>
+                            <td style={{ fontFamily:'-moz-initial' }}>{transit.airport[i + 1]}</td>
+                            <td style={{ fontFamily:'-moz-initial' }}>{renderRatingStars(transit.rating[i])}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         );
     };
+
+    const renderRatingStars = (rating) => {
+        const starCount = Math.round(rating);
+        const stars = [];
+        for (let i = 0; i < 5; i++) {
+            if (i < starCount) {
+                stars.push(
+                    <span key={i} style={{ color: 'gold', fontSize: '1.8em', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+                        &#9733;
+                    </span>
+                );
+            } else {
+                stars.push(
+                    <span key={i} style={{ color: 'gold', fontSize: '1.8em', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+                        &#9734;
+                    </span>
+                );
+            }
+        }
+        return stars;
+    };    
 
     // When sorting is applied, update the URL parameters
     const sortTransit = (type) => {
@@ -124,12 +147,12 @@ const RouteList = () => {
                 <div className="container">
                     <div style={{padding:'1%'}}></div>
                     <div className="sort-dropdown" style={{ position: 'relative', display: 'inline-block' }}>
-                        <button className="sort-button" onClick={() => setSortDropdownOpen(!sortDropdownOpen)} style={{ backgroundColor: 'red', color: 'white', padding: '10px', border: 'none', cursor: 'pointer' }}>
+                        <button className="sort-button" onClick={() => setSortDropdownOpen(!sortDropdownOpen)} style={{ backgroundColor: 'red', color: 'white', padding: '10px', border: 'none', cursor: 'pointer', fontFamily:'-moz-initial'  }}>
                             <FaSort style={{ marginRight: '5px' }} /> Sort
                         </button>
                         {sortDropdownOpen && (
-                            <div className="dropdown-content" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)', backgroundColor: 'white', borderRadius: '5px', position: 'absolute', top: '40px', right: '0', zIndex: '1' }}>
-                                <button onClick={() => { sortTransit('cost'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Cost</button>
+                            <div className="dropdown-content" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)', fontFamily:'-moz-initial' , backgroundColor: 'white', borderRadius: '5px', position: 'absolute', top: '40px', right: '0', zIndex: '1' }}>
+                                <button onClick={() => { sortTransit('cost'); setSortDropdownOpen(false); }} style={{ display: 'block', fontFamily:'-moz-initial' , width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Cost</button>
                                 <button onClick={() => { sortTransit('luggage'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Luggage</button>
                                 <button onClick={() => { sortTransit('duration'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Duration</button>
                                 <button onClick={() => { sortTransit('transit'); setSortDropdownOpen(false); }} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'left', border: 'none', backgroundColor: 'inherit', cursor: 'pointer', textDecoration: 'none' }}>Transit</button>
@@ -144,10 +167,10 @@ const RouteList = () => {
                         justifyContent: 'center',
                         alignItems: 'center'
                     }}>
-                        <button style={{ marginRight: '10px', backgroundColor: 'red', color: 'white' }} onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
-                        <span style={{ marginRight: '10px' }}>Page {currentPage} of {Math.ceil(transitInfo.length / entriesPerPage)}</span>
-                        <button style={{ marginRight: '10px', backgroundColor: 'red', color: 'white' }} onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === Math.ceil(transitInfo.length / entriesPerPage)}>Next</button>
-                        <select value={entriesPerPage} onChange={(e) => {
+                        <button style={{  fontFamily:'-moz-initial' , marginRight: '10px', backgroundColor: 'red', color: 'white' }} onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
+                        <span style={{ fontFamily:'-moz-initial' , marginRight: '10px' }}>Page {currentPage} of {Math.ceil(transitInfo.length / entriesPerPage)}</span>
+                        <button style={{ fontFamily:'-moz-initial' , marginRight: '10px', backgroundColor: 'red', color: 'white' }} onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === Math.ceil(transitInfo.length / entriesPerPage)}>Next</button>
+                        <select style={{fontFamily:'-moz-initial', fontSize:'1.2rem' }} value={entriesPerPage} onChange={(e) => {
                             setEntriesPerPage(parseInt(e.target.value));
                             setCurrentPage(1);
                         }}>
@@ -167,24 +190,21 @@ const RouteList = () => {
                             <div className="card-body">
                                 <div className="row">
                                     <div className="col">
-                                        <p className="text-left font-weight-bold">{transit.airport[0]}</p>
-                                        <p className="text-left font-weight-bold">{departureTimes[index]}</p>
-                                        <p className="text-left font-weight-bold">{transit.date[0]}</p>
+                                        <p className="text-left font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{transit.airport[0]}</p>
+                                        <p className="text-left font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{departureTimes[index]}</p>
+                                        <p className="text-left font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{transit.date[0]}</p>
                                     </div>
                                     <div className="col text-right">
-                                        <p className="text-right font-weight-bold">{transit.airport[transit.airport.length - 1]}</p>
-                                        <p className="text-right font-weight-bold">{arrivalTimes[index]}</p>
-                                        <p className="text-right font-weight-bold">{transit.date[transit.airport.length - 1]}</p>
+                                        <p className="text-right font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{transit.airport[transit.airport.length - 1]}</p>
+                                        <p className="text-right font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{arrivalTimes[index]}</p>
+                                        <p className="text-right font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{transit.date[transit.airport.length - 1]}</p>
                                     </div>
                                 </div>
                                 <hr style={{ borderColor: 'red', borderWidth: '2px' }} />
-                                <div className="red-dots-container">
-                                    {/* Render red dots here */}
-                                </div>
-                                <p className="text-center font-weight-bold">{transit.route.length}</p>
-                                <p className="text-left font-weight-bold">Seat Left : {transit.seatsLeft}</p>
-                                <p className="text-left font-weight-bold">Total Distance : {transit.distance}</p>
-                                <p className="text-left font-weight-bold">Maximum Luggage : {transit.luggage}</p>
+                                <p className="text-center font-weight-bold" style={{ fontFamily:'-moz-initial' }}>{transit.route.length}</p>
+                                <p className="text-left font-weight-bold" style={{ fontFamily:'-moz-initial' }}>Seat Left : {transit.seatsLeft}</p>
+                                <p className="text-left font-weight-bold" style={{ fontFamily:'-moz-initial' }}>Total Distance : {transit.distance}</p>
+                                <p className="text-left font-weight-bold" style={{ fontFamily:'-moz-initial' }}>Maximum Luggage : {transit.luggage}</p>
                                 <Link
                                     to="/bookticket"
                                     className={transit.seatsLeft === 0 ? 'btn btn-secondary float-right' : 'btn btn-danger float-right'}
@@ -194,7 +214,7 @@ const RouteList = () => {
                                     Book Now
                                 </Link>
                                 <p className="text-left mt-3">
-                                    <span className="font-weight-bold" style={{ fontSize: '1.5rem' }}>Total Cost(per person): ${transit.cost}</span>
+                                    <span className="font-weight-bold" style={{ fontFamily:'-moz-initial' , fontSize: '1.5rem' }}>Total Cost(per person): ${transit.cost}</span>
                                 </p>
                                 <a href='#'
                                     onClick={() => toggleExpand(index)}

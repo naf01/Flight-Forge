@@ -15,6 +15,7 @@ import AirlineProfile from './routes/AirlineProfile';
 import AirlineAirplane from './routes/AirlineAirplane';
 import AirlineCreateAccount from './routes/AirlineCreateAccount';
 import AirlineAddAirplane from './routes/AirlineAddAirplane';
+import ReviewForm from './routes/ReviewPage';
 
 const App = () => {
     return (
@@ -41,6 +42,7 @@ const App = () => {
                         <Route path="/airline/profile" element={<AirlineProfile />} />
                         <Route path="/airline/airplane" element={<AirlineAirplane />} />
                         <Route path="/airline/addairplane" element={<AirlineAddAirplane />} />
+                        <Route path="/review" element={<ReviewForm />} />
                     </Routes>
                 </Router>
             </div>
