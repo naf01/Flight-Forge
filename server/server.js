@@ -235,7 +235,7 @@ app.post("/api/v1/user/tickets", authorize, async (req, res) => {
 app.post("/api/v1/user/buyticket", async (req, res) => {
     try
     {
-        console.log(req.body);
+        //console.log(req.body);
         const route_id = [];
         const date = [];
         const { master_user, seat_type, transaction_id, name, email, passportnumber, country, city, dateofbirth } = req.body;
@@ -253,9 +253,11 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
         let non_user = results.rows[0].id;
 
         let tickets = [];
+        console.log(route_id);
         try {
             for(let i = 0; i < route_id.length; i++)
             {
+                console.log('hello -> ', route_id[i], date[i]);
                 results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5, $6)", [route_id[i], master_user, transaction_id, date[i], seat_type, non_user]);
                 tickets.push(results.rows[0].buyticket);
             }   
@@ -456,7 +458,16 @@ app.get("/api/v1/airports", async (req, res) => {
 //get all restaurants
 app.post("/api/v1/transit", async (req, res) => {
     try{
-        const results = await db.query("SELECT * FROM FindAirplaneTransitPaths($1, $2, $3::DATE, upper($4))", [req.body.start_airport_id, req.body.end_airport_id, req.body.date, req.body.seat_type]);
+        //console.log(req.body);
+        let results = await db.query("SELECT * FROM FindAirplaneTransitPaths($1, $2, $3::DATE, upper($4))", [req.body.start_airport_id, req.body.end_airport_id, req.body.date, req.body.seat_type]);
+        for (let i = 0; i < results.rows.length; i++) {
+            for (let j = 0; j < results.rows[i].dates.length; j++) {
+                const originalDate = new Date(results.rows[i].dates[j]);
+                originalDate.setDate(originalDate.getDate() + 1);
+                results.rows[i].dates[j] = originalDate.toISOString();
+            }
+        }
+        //console.log(results.rows[0].dates);
         res.status(200).json({
             status: "success",
             results: results.rows.length,
