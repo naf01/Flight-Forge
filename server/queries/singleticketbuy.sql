@@ -1,10 +1,5 @@
-CREATE OR REPLACE FUNCTION BUYTICKET(
-    rid INT,
-    uid INT,
-    transaction_id VARCHAR(30), -- Removed 'in' from parameter declaration
-    journey_date DATE,
-    seattype VARCHAR(10)
-) RETURNS INT AS $$
+CREATE OR REPLACE FUNCTION "public"."buyticket"("rid" int4, "uid" int4, "transaction_id" varchar, "journey_date" date, "seattype" varchar, "nonuser" int4)
+  RETURNS "pg_catalog"."int4" AS $BODY$
 DECLARE
     dynamiccost INT;
     seat_no INT;
@@ -29,7 +24,7 @@ BEGIN
         SELECT (SELECT business_seat FROM AIRPLANE WHERE id = (SELECT airplane_id FROM route WHERE id = rid)) - seat_left + 1 INTO seat_no;
     END IF;
 
-    INSERT INTO ticket (journeydate, seat_type, seatno, amount, passportnumber, user_id, route_id, buydate, transactionid)
+    INSERT INTO ticket (journeydate, seat_type, seatno, amount, passportnumber, user_id, route_id, buydate, transactionid, boughtfor)
     VALUES (
         journey_date,
         seattype,
@@ -39,13 +34,13 @@ BEGIN
         uid,
         rid,
         CURRENT_DATE,
-        transaction_id
+        transaction_id,
+		nonuser
     )
     RETURNING id INTO tid;
 
     RETURN tid;
 END;
-$$ LANGUAGE plpgsql;
 
 
 
@@ -76,6 +71,4 @@ AFTER INSERT ON ticket
 FOR EACH ROW
 EXECUTE FUNCTION afterbuyticket();
 
-SELECT BUYTICKET(19, 1, 'ABCDE12345', '2024-02-24'::DATE, 'commercial'); select * from seat_info where route_id = 19;
-
-select * from ticket;
+SELECT BUYTICKET(19, 1, 'ABCDE12345', '2024-02-24'::DATE, 'commercial', 3);

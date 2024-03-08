@@ -137,7 +137,13 @@ const RouteList = () => {
                         )}
                     </div>
                     <div style={{padding:'1%'}}></div>
-                    <div className="pagination" style={{ textAlign: 'center', marginTop: '20px', alignContent:'center' }}>
+                    <div className="pagination" style={{ 
+                        textAlign: 'center', 
+                        marginTop: '20px', 
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
                         <button style={{ marginRight: '10px', backgroundColor: 'red', color: 'white' }} onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
                         <span style={{ marginRight: '10px' }}>Page {currentPage} of {Math.ceil(transitInfo.length / entriesPerPage)}</span>
                         <button style={{ marginRight: '10px', backgroundColor: 'red', color: 'white' }} onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === Math.ceil(transitInfo.length / entriesPerPage)}>Next</button>
@@ -153,7 +159,11 @@ const RouteList = () => {
                     </div>
 
                     {currentEntries.map((transit, index) => (
-                        <div key={index} className="card my-3" style={{ boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)' }}>
+                        <div key={index} className="card my-3 center" style={{ 
+                            boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)', 
+                            width: '75%',
+                            margin: 'auto' /* Add this line */
+                        }}>
                             <div className="card-body">
                                 <div className="row">
                                     <div className="col">

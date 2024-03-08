@@ -60,6 +60,10 @@ const UserProfile = () => {
         console.log("Signing out...");
     };
 
+    const handleTicket = () => {
+        navigate('/userticket');
+    };
+
     return (
         <div className="container-fluid" style={{
             backgroundImage: `url(${backgroundImage})`, // Use the imported background image
@@ -98,6 +102,17 @@ const UserProfile = () => {
               fontSize: '16px', 
               transition: 'background-color 0.3s',
             }} onClick={handleSignOut}>Sign Out</button>
+            <button style={{
+              color: 'white', 
+              backgroundColor: '#800000', 
+              padding: '15px 20px', // Adjust padding here
+              marginRight: '10px', 
+              borderRadius: '5px',
+              cursor: 'pointer',
+              textDecoration: 'none', 
+              fontSize: '16px', 
+              transition: 'background-color 0.3s',
+            }} onClick={handleTicket}>Tickets</button>
                     </div>
                 </div>
                 <div className="row justify-content-center">

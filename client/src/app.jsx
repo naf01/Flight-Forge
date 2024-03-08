@@ -8,7 +8,8 @@ import CreateAccount from './routes/CreateAccount';
 import { Helmet } from 'react-helmet';
 import UserProfile from './routes/UserProfile';
 import BookTicket from './routes/BookTicket';
-import icon from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png'; // Import your favicon image
+import icon from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png';
+import UserTickets from './routes/userTicket';
 
 const App = () => {
     return (
@@ -24,11 +25,12 @@ const App = () => {
                     {/* Define routes */}
                     <Routes>
                         <Route path="/" element={<Home />} />
-                        <Route path="/:user_id/review" element={<ReviewPage />} />
+                        <Route path="/userreview" element={<ReviewPage />} />
                         <Route path="/signin" element={<SignInPage />} />
                         <Route path="/CreateAccount" element={<CreateAccount />} />
                         <Route path="/userprofile" element={<UserProfile />} />
                         <Route path="/bookticket" element={<BookTicket />} />
+                        <Route path="/userticket" element={<UserTickets />} />
                     </Routes>
                 </Router>
             </div>

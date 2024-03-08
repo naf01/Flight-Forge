@@ -92,7 +92,8 @@ const BookTicket = () => {
                                 route_id: selectedTransit.route,
                                 date: selectedTransit.date,
                                 master_user: userId,
-                                non_user: i
+                                non_user: i,
+                                amount: selectedTransit.costlist
                             });
                             console.log(response);
                         } catch (error) {
@@ -103,7 +104,7 @@ const BookTicket = () => {
                     
                 }
 
-                //navigate('/');
+                navigate('/userticket');
             } else {
                 alert('Transaction ID not provided. Ticket booking cancelled.');
             }
@@ -165,7 +166,7 @@ const BookTicket = () => {
 
             <h1 style={{ textAlign: 'center' }}>Book Ticket</h1>
             {selectedTransit && (
-                <div className="mt-4">
+                <div className="mt-4" style={{width: '75%'}}>
                     <h5>Transit Details</h5>
                     <table className="table table-bordered">
                         <tbody>

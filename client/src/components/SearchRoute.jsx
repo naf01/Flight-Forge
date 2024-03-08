@@ -5,7 +5,7 @@ import { RouteContext } from '../context/RouteContext';
 import RouteFinder from '../apis/RouteFinder';
 
 class TransitInfo {
-  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage, seat_type) {
+  constructor(transit, date, airport, route, airplaneid, airplanename, seatsLeft, distance, cost, luggage, seat_type, costlist) {
       this.transit = transit;
       this.date = date;
       this.airport = airport;
@@ -17,6 +17,7 @@ class TransitInfo {
       this.cost = cost;
       this.luggage = luggage;
       this.seat_type = seat_type;
+      this.costlist = costlist;
   }
 }
 
@@ -213,6 +214,7 @@ const SearchRoute = () => {
         let totaldistance = [], dist = 0.0;
         let totalcost = [], cost = 0;
         let luggae_hold = [], luggage = 0;
+        let costlist = [], ticketcost = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
             seat = 1000000;
@@ -242,10 +244,14 @@ const SearchRoute = () => {
                 console.log(response3.data);
                 if(response3.data.results)
                 {
+                  if(!response3.data.cost) response3.data.cost = 0;
+                  ticketcost.push(response3.data.cost);
                   cost = cost + response3.data.cost;
                   dist = dist + response3.data.distance;
                 }
             }
+            costlist.push(ticketcost);
+            ticketcost = [];
             if(seat == 1000000) seats_left.push(0);
             else seats_left.push(seat);
             if(luggage == 1000) luggae_hold.push(0);
@@ -270,7 +276,7 @@ const SearchRoute = () => {
         const Ti = [];
 
         for(let i=0;i<modifiedTransit.length;i++){
-            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i], ticketClass));
+            if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i], ticketClass, costlist[i]));
         }
         console.log(Ti);
 

@@ -9,6 +9,7 @@ const jwtGenerator = require("./utils/jwtGenerator");
 const authorize = require("./middleware/authorize");
 const jwt = require('jsonwebtoken');
 const { start } = require("repl");
+const { constants } = require("buffer");
 
 function sha256(inputString) {
   const hash = crypto.createHash('sha256');
@@ -190,10 +191,51 @@ app.post("/api/v1/user/profiledata", authorize, async (req, res) => {
         res.status(500).json({ error: 'Internal server error.' });
     }
 });
+//get user ticket
+app.post("/api/v1/user/tickets", authorize, async (req, res) => {
+    try {
+        let Ti = [], Tin = [];
+        let ticketinfo, x;
+        const { id } = req.body; // Extract parameters from query string
+
+        if (!id) {
+            return res.status(400).json({ error: 'User ID or password not provided.' });
+        }
+
+        const results = await db.query("SELECT * FROM user_ticket WHERE user_id = $1", [id]);
+        let results1;
+        for(let i=0;i<results.rows.length;i++)
+        {
+            x = results.rows[i].tickets;
+            for(let j=0;j<x.length;j++)
+            {
+                results1 = await db.query("SELECT T.id as ticket_id, T.*, NU.* FROM ticket T join non_user NU on(T.boughtfor = NU.id) WHERE T.id = $1", [x[j]]);
+                Tin.push(results1.rows[0]);
+            }
+            Ti.push(Tin);
+            Tin = [];
+        }
+
+        if (results.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found or incorrect credentials.' });
+        }
+
+        res.status(200).json({
+            status: "success",
+            data: {
+                ticketinfo: Ti // Assuming you expect only one user based on ID
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching user data:', err);
+        res.status(500).json({ error: 'Internal server error.' });
+    }
+});
 //user buys ticket
 app.post("/api/v1/user/buyticket", async (req, res) => {
     try
     {
+        console.log(req.body);
         const route_id = [];
         const date = [];
         const { master_user, seat_type, transaction_id, name, email, passportnumber, country, city, dateofbirth } = req.body;
@@ -211,11 +253,17 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
         let non_user = results.rows[0].id;
 
         let tickets = [];
-
-        for(let i = 0; i < route_id.length; i++)
-        {
-            results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5, $6)", [route_id[i], master_user, transaction_id, date[i], seat_type, non_user]);
-            tickets.push(results.rows[0].buyticket);
+        try {
+            for(let i = 0; i < route_id.length; i++)
+            {
+                results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5, $6)", [route_id[i], master_user, transaction_id, date[i], seat_type, non_user]);
+                tickets.push(results.rows[0].buyticket);
+            }   
+        } catch (error) {
+            for(let i = 0; i < tickets.length; i++)
+            {
+                results = await db.query("DELETE FROM ticket WHERE id = $1", [tickets[i]]);
+            }
         }
 
         results = await db.query('insert into user_ticket (tickets, user_id) values (($1), $2) returning *', [tickets, master_user]);
@@ -223,9 +271,21 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
         res.status(200).json({
             status: "success"
         });
-
-        //const results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5)", [route_id, master_user, transaction_id, date, seat_type]);
-        
+    } catch (err){
+        res.status(201).json({
+            status: "failed"
+        });
+    }
+});
+//ticket return
+app.post("/api/v1/user/returnticket", async (req, res) => {
+    try
+    {
+        const { id } = req.body;
+        const results = await db.query("DELETE FROM user_ticket WHERE id = $1", [id]);
+        res.status(200).json({
+            status: "success"
+        });
     } catch (err){
         res.status(201).json({
             status: "failed"
@@ -481,13 +541,16 @@ app.post("/api/v1/route/distanceandcost", async (req, res ) => {
 });
 
 // add user review
-app.post("/api/v1/:user_id/review/", async (req, res) => {
+app.post("/api/v1/user/review", authorize, async (req, res) => {
     try
     {
-        console.log(req.body);
-        const results = await db.query("INSERT INTO Review (user_id, airplane_id, message, rating, Date) values ($1, $2, $3, $4, CURRENT_TIMESTAMP) returning *", [req.params.user_id, req.body.airplane_id, req.body.message, req.body.rating]);
-        console.log(req.params.user_id);
-        console.log(results.rows);
+        let aid;
+        let results = await db.query("SELECT airplane_id FROM route WHERE id = $1", [req.body.route_id]);
+        aid = results.rows[0].airplane_id;
+        //console.log(req.body);
+        results = await db.query("INSERT INTO Review (user_id, airplane_id, message, rating, Date) values ($1, $2, $3, $4, CURRENT_TIMESTAMP) returning *", [req.body.id, aid, req.body.message, req.body.rating]);
+        //console.log(req.params.user_id);
+        //console.log(results.rows);
         res.status(200).json({
             status: "success",
             results: results.rows.length,
