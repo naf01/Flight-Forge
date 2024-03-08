@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import SearchRoute from '../components/SearchRoute';
 import RouteList from '../components/RouteList';
-import backgroundImage from 'D:/CP/Projects/Flight-Forge/client/src/assets/cover.png'; // Import your background image
+import backgroundImage from '../assets/cover.png';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Home = () => {
@@ -48,7 +48,7 @@ const Home = () => {
                 <div className="row mt-3">
                     <div className="col">
                         <p>
-                            <Link to="/airline/login" className="text-primary">Wanna be an airline company?</Link>
+                            <Link to="/airline/signin" className="text-primary" >Wanna be an airline company?</Link>
                         </p>
                     </div>
                 </div>

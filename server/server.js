@@ -328,14 +328,58 @@ app.post("/api/v1/user/returnticket", authorize, async (req, res) => {
             // ######### Airplane_Company ######### //
             // ######### Airplane_Company ######### //
             // ######### Airplane_Company ######### //
-//login
+//login -> SATAK
+app.post("/api/v1/airline/login", async (req, res) => {
+    try
+    {
+        //console.log(req.body);
+        const results = await db.query("select name from AIRLINES where id = $1", [req.body.id]); //changed
+        //console.log(results.rows);
+        if(results.rows.length == 0)
+        {
+            res.status(201).json({
+                status: "failed",
+                data: {
+                    flightforge : "wrong user id",
+                }
+            });
+        }
+        if(results.rows[0].name == (req.body.password)) //changed
+        {
+            console.log("logged in");
+            console.log("transfered id : " + req.body.id);
+            const jwtToken = jwtGenerator(req.body.id);
+            console.log(jwtToken);
+            res.status(200).json({
+                status: "success",
+                results: results.rows.length,
+                data: {
+                    token: jwtToken
+                }
+            });
+        }
+        else
+        {
+            res.status(201).json({
+                status: "failed",
+                data: {
+                    flightforge : "wrong password",
+                }
+            });
+        }
+    } catch (err){
+        //console.log(err);
+    }
+});
+
+
 //signup //checcheckingk needed
 app.post('/api/v1/airline/signup', async (req, res) => {
     try
     {
         //console.log(req.body.mobileno[1]);
         const results = await db.query("insert into airlines (name, totalplane, revenue) values ($1, 0, 0) returning *", 
-                    [req.body.name, req.body.total_plae]);
+                    req.body.Name);
         console.log(results.rows);
         if (results.rows.length == 0) res.status(200).json({
             status: "success",

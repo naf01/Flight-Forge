@@ -8,7 +8,7 @@ import CreateAccount from './routes/CreateAccount';
 import { Helmet } from 'react-helmet';
 import UserProfile from './routes/UserProfile';
 import BookTicket from './routes/BookTicket';
-import icon from 'D:/CP/Projects/Flight-Forge/client/src/assets/tlogo.png';
+import icon from './assets/tlogo.png'; 
 import UserTickets from './routes/userTicket';
 import AirlineSignin from './routes/AirlineSignin';
 import AirlineProfile from './routes/AirlineProfile';
