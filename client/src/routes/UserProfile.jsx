@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate
 import RouteFinder from '../apis/RouteFinder';
-import defaultprofileimage from '../assets/logo.png';
+import defaultprofileimage from '../assets/tlogo.png';
 import backgroundImage from '../assets/cover.png';
 
 const UserProfile = () => {
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const navigate = useNavigate(); // Use useNavigate hook
+    const navigate = useNavigate();
+    let [profilePhoto, setProfilePhoto] = useState(defaultprofileimage);
 
     useEffect(() => {
         const fetchUserData = async () => {
+            setProfilePhoto(defaultprofileimage);
             try {
                 const response = await RouteFinder.post('/user/authenticate', {
                     token: localStorage.getItem('token')
@@ -21,11 +23,11 @@ const UserProfile = () => {
                     setIsLoggedIn(true);
                 } else {
                     setIsLoggedIn(false);
-                    navigate('/'); // Redirect to "/" if not logged in
+                    navigate('/');
                 }
             } catch (error) {
                 setIsLoggedIn(false);
-                navigate('/'); // Redirect to "/" if not logged in
+                navigate('/');
             }
         };
 
@@ -46,7 +48,14 @@ const UserProfile = () => {
                 id: 0,
                 token: token
             });
-            console.log(response);
+            if(response.data.data.user.profilephoto.length > 0){
+                //setProfilePhoto(response.data.data.user.profilephoto);
+                console.log(profilePhoto);
+            }
+            else
+            {
+                console.log("not baaaaaal");
+            }
             setUserData(response.data.data.user);
         } catch (error) {
             console.error('Error fetching user data:');
@@ -69,15 +78,15 @@ const UserProfile = () => {
             backgroundImage: `url(${backgroundImage})`, // Use the imported background image
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            minHeight: '100vh', // Ensures the background covers the entire viewport height
-            paddingTop: '10px', // Adjust the top padding as needed
-            // You can add more styles as needed
+            minHeight: '100vh',
+            paddingTop: '10px',
+            fontFamily: '-moz-initial'
         }}>
             <div className="container mt-4">
                 <div className="d-flex justify-content-end align-items-center mb-4">
                     <div className="mr-auto">
-                        <img src={defaultprofileimage} alt="Profile" style={{ width: '150px', height: '150px', borderRadius: '50%', marginRight: '10px' }} />
-                        <h1 style={{ paddingTop: '30px', color: 'green', fontWeight: 'bold', fontFamily: 'cursive' }}>{userData ? userData.id : ''}</h1>
+                        <img src={profilePhoto} alt="Profile" style={{ width: '150px', height: '150px', borderRadius: '50%', marginRight: '10px' }} />
+                        <h1 style={{ paddingTop: '30px', color: 'green', fontWeight: 'bold', fontFamily: 'cursive' }}>ID: {userData ? userData.id : ''}</h1>
                     </div>
                     <div className="button-group">
                         <Link style={{
