@@ -67,9 +67,8 @@ const UserTicket = () => {
         navigate('/');
     };
 
-    const handleReview = async (routeId, airplanename) => {
+    const handleReview = async (routeId) => {
         localStorage.setItem('route_id', routeId);
-        localStorage.setItem('airplane_name', airplanename);
         navigate(`/review`);
     };
 
@@ -134,7 +133,7 @@ const UserTicket = () => {
         return (
             <div>
                 {currentTickets.map((transit, index) => (
-                    <div key={index} className="card shadow mb-4 mx-auto" style={{ width: '75%' }}>
+                    <div key={index} className="card shadow mb-4 mx-auto" style={{ width: '75%', fontFamily: '-moz-initial'}}>
                         <div className="card-body">
                             <h5 className="card-title">User Info</h5>
                             <table className="table table-striped">
@@ -195,7 +194,7 @@ const UserTicket = () => {
                                             <td>{ticket.transactionid}</td>
                                             <td>
                                                 {new Date() - new Date(ticket.journeydate) > 1000 * 60 * 60 * 24 ? (
-                                                    <button className="btn btn-primary" onClick={() => handleReview(ticket.route_id, ticket.airplanename)}>Give a review</button>
+                                                    <button className="btn btn-primary" onClick={() => handleReview(ticket.route_id)}>Give a review</button>
                                                 ) : (
                                                     <button className="btn btn-secondary" disabled>Take Our Flight First</button>
                                                 )}
@@ -255,7 +254,6 @@ const UserTicket = () => {
                 <button onClick={() => setIsUpcoming(true)} className={`btn ${isUpcoming ? 'btn-primary' : 'btn-secondary'} mr-2`}>Upcoming</button>
                 <button onClick={() => setIsUpcoming(false)} className={`btn ${isUpcoming ? 'btn-secondary' : 'btn-primary'}`}>Ticket Archive</button>
             </div>
-            {error && <p>Error: {error}</p>}
             {tickets.length > 0 ? (
                 <div>
                     <div className="text-center">
@@ -268,7 +266,9 @@ const UserTicket = () => {
                     {renderTicketTables()}
                 </div>
             ) : (
-                <p>No tickets found.</p>
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: '24px', fontWeight: 'bold', textShadow: '2px 2px 4px #000' }}>No tickets found.</p>
+                </div>
             )}
         </div>
     );

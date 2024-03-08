@@ -16,54 +16,64 @@ const CreateAccount = () => {
     const [passportnumber, setPassportnumber] = useState('');
     const [error, setError] = useState('');
     const [generatedPassword, setGeneratedPassword] = useState('');
-    const navigate = useNavigate(); 
+    const [profilePhoto, setProfilePhoto] = useState(null); // State for profile photo
+    const navigate = useNavigate();
 
     const handleGeneratePassword = () => {
         const generatedPass = Math.random().toString(36).slice(-8);
         setPassword(generatedPass);
+        setConfirmPassword(generatedPass);
         setGeneratedPassword(generatedPass);
+    };
+
+    const handleFileChange = (e) => {
+        setProfilePhoto(e.target.files[0]); // Capture the selected file
     };
 
     const handleCreateAccount = async (e) => {
         e.preventDefault();
+    
+        const formData = new FormData();
+        formData.append('profilePhoto', profilePhoto); // Make sure profilePhoto contains the file object
+        formData.append('first_name', firstName);
+        formData.append('last_name', lastName);
+        formData.append('dateofbirth', dateOfBirth);
+        formData.append('mobileno', mobileNo);
+        formData.append('password', password);
+        formData.append('city', city);
+        formData.append('country', country);
+        formData.append('zipcode', parseInt(zipcode));
+        formData.append('email', email);
+        formData.append('passportnumber', parseInt(passportnumber));
+    
         try {
-            if (password !== confirmPassword) {
-                setError('Passwords do not match.');
-                return;
-            }
-
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if(!emailPattern.test(email))
-            {
-                setError('Invalid email address.');
-                return;
-            }
-
-            const response = await RouteFinder.post('/user/signup', {
-                first_name: firstName,
-                last_name: lastName,
-                dateofbirth: dateOfBirth,
-                mobileno: [mobileNo], 
-                password: password,
-                city: city,
-                country: country,
-                zipcode: parseInt(zipcode),
-                email: email,
-                passportnumber: parseInt(passportnumber)
+            console.log('Creating account...');
+            const response = await RouteFinder.post('/user/signup', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
             });
-            
+    
+            console.log(response);
+    
             if (response.status === 200) {
                 const token = response.data.data.token;
                 localStorage.setItem('token', token);
                 navigate("/userprofile");
+            } else {
+                // Handle other status codes
+                const data = await response.json();
+                if (data && data.error) {
+                    setError(data.error);
+                } else {
+                    setError('Failed to create account. Please try again.');
+                }
             }
-            else console.log(response);
-
-        } catch (err) {
+        } catch (error) {
+            console.error('Error creating account:', error);
             setError('Failed to create account. Please try again.');
-            console.error('Error creating account:', err);
         }
-    };
+    };    
 
     return (
         <div className="container mt-5">
@@ -76,7 +86,7 @@ const CreateAccount = () => {
                         <div className="card-body">
                             {error && <div className="alert alert-danger">{error}</div>}
                             <form onSubmit={handleCreateAccount}>
-                                <div className="form-group">
+                            <div className="form-group">
                                     <label>First Name:</label>
                                     <input type="text" className="form-control" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                                 </div>
@@ -125,6 +135,11 @@ const CreateAccount = () => {
                                     <input className="form-control" value={passportnumber} onChange={(e) => {
                                         setPassportnumber(e.target.value);
                                     }} />
+                                </div>
+                                {/* Other form inputs */}
+                                <div className="form-group">
+                                    <label>Profile Photo:</label>
+                                    <input type="file" className="form-control-file" onChange={handleFileChange} />
                                 </div>
                                 <button type="button" className="btn btn-success mb-3" onClick={handleGeneratePassword}>Generate Password</button>
                                 <p>Generated Password: {generatedPassword}</p>

@@ -140,7 +140,7 @@ const BookTicket = () => {
     }, [seatsToBook, userData]);
 
     return (
-        <div className="container mt-5">
+        <div className="container mt-5" style={{fontFamily: '-moz-initial'}}>
             <div className="d-flex justify-content-end mb-3">
                 <button className="btn btn-danger" onClick={handleGoToHome} style={{
                     color: 'white',

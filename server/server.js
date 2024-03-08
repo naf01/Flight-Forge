@@ -10,6 +10,8 @@ const authorize = require("./middleware/authorize");
 const jwt = require('jsonwebtoken');
 const { start } = require("repl");
 const { constants } = require("buffer");
+const multer = require('multer');
+const path = require('path');
 
 function sha256(inputString) {
   const hash = crypto.createHash('sha256');
@@ -28,6 +30,41 @@ app.use((req, res, next) => {
     console.log("middle");
     next();
 })*/
+
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, 'D:/CP/Projects/Flight-Forge/client/src/assets'); // Destination folder where files will be stored
+    },
+    filename: function(req, file, cb) {
+        // Define filename to avoid conflicts
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+// Initialize multer upload
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // Adjust the file size limit here (10 MB in this example)
+    fileFilter: function (req, file, cb) {
+        checkFileType(file, cb);
+    }
+}).single('profilePhoto');
+
+// Check file type
+function checkFileType(file, cb) {
+    // Allowed filetypes
+    const filetypes = /jpeg|jpg|png/;
+    // Check extension
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    // Check mime type
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+        return cb(null, true);
+    } else {
+        cb('Error: Images only!');
+    }
+}
 
 //passwor checker
 async function comparePassword(userId, providedPassword) {
@@ -49,8 +86,8 @@ async function comparePassword(userId, providedPassword) {
         return passwordsMatch;
       } catch (error) {
         console.log('Error in comparePassword:');
-      }
     }
+}
 
 
 
@@ -76,49 +113,50 @@ app.post("/api/v1/user/authenticate", async (req, res) => {
             // ######### USER ######### //
             // ######### USER ######### //
 //signup
-app.post("/api/v1/user/signup", async (req, res) => {
-    try {
-        console.log(req.body);
-        const { first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, email, passportnumber } = req.body;
-
-        // Assuming you have the sha256 function available for hashing the password
-        const hashedPassword = sha256(password);
-
-        const results = await db.query(
-            `INSERT INTO APP_USER (first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, age, email, passportnumber)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CalculateAge($3), $9, $10)
-            RETURNING *`,
-            [first_name, last_name, dateofbirth, mobileno, hashedPassword, city, country, zipcode, email, passportnumber]
-        );
-
-        //const jwtToken = jwtGenerator(results.rows[0].id);
-
-        //console.log(jwtToken);
-
-        console.log(results.rows);
-
-        if (results.rows.length != 0) {
-            const jwtToken = jwtGenerator(results.rows[0].id);
-            console.log(jwtToken);
-            res.status(200).json({
-                status: "success",
-                results: results.rows.length,
-                data: {
-                    token: jwtToken
-                }
-            });
-        } else {
-            res.status(201).json({
-                status: "failed",
-                data: {
-                    flightforge: "wrong data format",
-                }
-            });
+app.post('/api/v1/user/signup', async (req, res) => {
+    upload(req, res, async (err) => {
+        if (err) {
+            console.error('Error uploading file:', err);
+            return res.status(400).json({ error: 'Error uploading file.' });
         }
-    } catch (err) {
-        console.error("Error:", err);
-        res.status(201).json({ error: "Internal server error" });
-    }
+
+        try {
+            let mobileno = [];
+            mobileno.push(req.body.mobileno);
+            const { first_name, last_name, dateofbirth, password, city, country, zipcode, email, passportnumber } = req.body;
+            // password = sha256(password); // Uncomment if password hashing is required
+            let enc = sha256(password);
+            const profilePhotoPath = req.file ? req.file.path : null;
+
+            // Insert user data into the database
+            const results = await db.query(
+                `INSERT INTO app_user (first_name, last_name, dateofbirth, mobileno, password, city, country, zipcode, age, email, passportnumber, profilephoto)
+                VALUES ($1, $2, $3, ($4), $5, $6, $7, $8, CalculateAge($3), $9, $10, $11)
+                RETURNING *`,
+                [ first_name, last_name, dateofbirth, mobileno, enc, city, country, zipcode, email, passportnumber, profilePhotoPath ]
+            );
+
+            if (results.rows.length != 0) {
+                const jwtToken = jwtGenerator(results.rows[0].id);
+                res.status(200).json({
+                    status: "success",
+                    data: {
+                        token: jwtToken
+                    }
+                });
+            } else {
+                res.status(201).json({
+                    status: "failed",
+                    data: {
+                        flightforge: "wrong data format",
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error signing up user:', error);
+            res.status(500).json({ error: 'Internal server error.' });
+        }
+    });
 });
 
 //login
@@ -518,6 +556,21 @@ app.get("/api/v1/airports", async (req, res) => {
     }
 });
 
+//get airplane name
+app.post("/api/v1/airplaneName", authorize, async (req, res) => {
+    try {
+        let results = await db.query("SELECT airplanename FROM airplane WHERE id = (SELECT airplane_id FROM route WHERE id = $1)", [req.body.route_id]);
+        res.status(200).json({
+            status: "success",
+            name : results.rows[0].airplanename
+        });
+    } catch (error) {
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
 //get all restaurants
 app.post("/api/v1/transit", async (req, res) => {
     try{
@@ -634,6 +687,7 @@ app.post("/api/v1/airplanerating", async (req, res) => {
 app.post("/api/v1/user/review", authorize, async (req, res) => {
     try
     {
+        console.log(req.body);
         let aid;
         let results = await db.query("SELECT airplane_id FROM route WHERE id = $1", [req.body.route_id]);
         aid = results.rows[0].airplane_id;
