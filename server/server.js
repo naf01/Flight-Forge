@@ -13,6 +13,8 @@ const { constants } = require("buffer");
 const multer = require('multer');
 const path = require('path');
 
+const air_scaling = 1000000;
+
 function sha256(inputString) {
   const hash = crypto.createHash('sha256');
   hash.update(inputString, 'utf-8');
@@ -351,6 +353,70 @@ app.post("/api/v1/user/returnticket", authorize, async (req, res) => {
         });
     }
 });
+app.post('/api/v1/user/profileupdate', authorize, async (req, res) => {
+    try {
+        console.log(req.body);
+        const m = [];
+        m.push(req.body.mobileNo);
+        const { id, firstName, lastName, country, city } = req.body;
+
+        // Update user profile information in the database
+        const query = `
+            UPDATE app_user 
+            SET 
+                first_name = $1,
+                last_name = $2,
+                mobileno = $3,
+                country = $4,
+                city = $5
+            WHERE 
+                id = $6
+        `;
+
+        console.log(m);
+
+        const values = [firstName, lastName, m, country, city, id];
+        await db.query(query, values);
+
+        res.status(200).json({ message: 'User profile updated successfully' });
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({ message: 'Failed to update user profile' });
+    }
+});
+//update password
+app.post('/api/v1/user/passwordupdate', authorize, async (req, res) => {
+    try {
+        const { oldPassword, newPassword, confirmPassword, token } = req.body;
+        const userId = req.body.id;
+        console.log(req.body.id);
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ error: "New password and confirm password do not match" });
+        }
+        const user = await db.query('SELECT * FROM app_user WHERE id = $1', [userId]);
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const isPasswordMatch = sha256(oldPassword) === user.rows[0].password;
+        if (!isPasswordMatch) {
+            return res.status(401).json({ error: "Old password is incorrect" });
+        }
+
+        // Hash the new password before updating it in the database
+        const hashedPassword = sha256(newPassword);
+
+        // Update the user's password in the database
+        await db.query('UPDATE app_user SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+
+        // Send a success response
+        return res.status(200).json({ message: "Password updated successfully", token: jwtGenerator(userId) });
+    } catch (error) {
+        console.error("Error updating password:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
 //update
 
 
@@ -386,7 +452,7 @@ app.post("/api/v1/airline/login", async (req, res) => {
         {
             console.log("logged in");
             console.log("transfered id : " + req.body.id);
-            const jwtToken = jwtGenerator(req.body.id);
+            const jwtToken = jwtGenerator(req.body.id*air_scaling);
             console.log(jwtToken);
             res.status(200).json({
                 status: "success",
@@ -412,7 +478,7 @@ app.post("/api/v1/airline/login", async (req, res) => {
 
 
 //signup //checcheckingk needed
-app.post('/api/v1/airline/signup', async (req, res) => {
+app.post('/api/v1/airline/signup', authorize, async (req, res) => {
     try
     {
         //console.log(req.body.mobileno[1]);
@@ -436,26 +502,173 @@ app.post('/api/v1/airline/signup', async (req, res) => {
         console.log("baaal" + err);
     }
 });
-
-//adding airplanes in a airline //checking needed
-app.post('/api/v1/airline/addairplane', async (req, res) => {
+//airline getting info
+app.post("/api/v1/airline/info", authorize, async (req, res) => {
     try
     {
-        console.log(req.body);
-        const days = [];
-        days = req.body.days;
-        let {airline_id, airplanename, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage} = req.body;
-        const results = await db.query("insert into airplane (airline_id, airplanename, days, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage) values ($1, $2, ($3), $4, $5, $6, $7, $8, $9, $10) returning *",
-        [airline_id, airplanename, days, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage]);
+        req.body.id = req.body.id / air_scaling;
+        //console.log(req.body);
+        const results = await db.query("select * from airlines where id = $1", [req.body.id]);
+        let T = [];
+        let mes = [];
+        console.log(results.rows[0].airplane_id);
+        let x = results.rows[0].airplane_id;
+        for(let i = 0; i < x.length; i++)
+        {
+            let results1 = await db.query("select * from airplane where id = $1", [x[i]]);
+            T.push(results1.rows[0]);
+            let results2 = await db.query("select (select first_name || ' ' || last_name as fullname from app_user where id = user_id), message from review where airplane_id = $1", [x[i]]);
+            if(results2.rows.length != 0)
+            {
+                mes.push(results2.rows);
+                //console.log(results2.rows);
+            }
+        }
+        results1 = await db.query("select * from get_total_amount_by_date($1)", [req.body.id]);
+        let y = 0;
+        for (let i = 0; i < results1.rows.length; i++) {
+            results1.rows[i].date = new Date(results1.rows[i].date);
+            results1.rows[i].date.setDate(results1.rows[i].date.getDate() + 1);
+            if(results1.rows[i].total_amount == null) results1.rows[i].total_amount = 0;
+            y += results1.rows[i].total_amount;
+            results1.rows[i].total_amount = y;
+        }
+        //console.log(results1.rows);
         res.status(200).json({
             status: "success",
             results: results.rows.length,
             data: {
-                FlightForge : results.rows,
+                root : results.rows[0],
+                airplane : T,
+                revenue : results1.rows,
+                review: mes
             }
         });
     } catch (err){
-        console.log("baaal");
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+//airline getting airplane info
+app.post("/api/v1/airline/airplaneinfo", async (req, res) => {
+    console.log('baaaler alu dhur', req.body.id);
+    try {
+        let results2 = await db.query("select (select first_name || ' ' || last_name as fullname from app_user where id = user_id), message from review where airplane_id = $1", req.body.id);
+        console.log(results2.rows);
+        res.status(200).json({
+            status: "success",
+            review: results2.rows
+        });
+    } catch (error) {
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+
+app.post('/api/v1/getroutes', async (req, res) => {
+    try {
+        const response = await db.query("select id, (select name as start_name from airport where id = start_airport_id), (select name as end_name from airport where id = end_airport_id), distance_km, airplane_id, arrival_time, departure_time from route where airplane_id = $1", [req.body.id]);
+        res.status(200).json({
+            status: "success",
+            routes: response.rows
+        });
+    } catch (error) {
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+//delete routes
+app.post('/api/v1/deleteroute', async (req, res) => {
+    try {
+      const { id } = req.body;
+      await db.query('DELETE FROM ROUTE WHERE ID = $1', [id]);
+  
+      res.json({ status: 'success' });
+    } catch (error) {
+      console.error('Error deleting route:',);
+    }
+  });
+//add route
+app.post('/api/v1/airline/addroute', async (req, res) => {
+    try {
+        console.log(req.body);
+        const { start_airport_id, end_airport_id, distance_km, airplane_id, arrival_time, departure_time } = req.body;
+
+        const results = await db.query("insert into route (start_airport_id, end_airport_id, distance_km, airplane_id, arrival_time, departure_time) values ($1, $2, $3, $4, $5, $6) returning *",
+        [start_airport_id, end_airport_id, distance_km, airplane_id, arrival_time, departure_time]);
+        res.status(200).json({
+            status: "success",
+            info: results.rows[0]
+        });
+    } catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+//update route
+//add route
+app.post('/api/v1/airline/updateroute', async (req, res) => {
+    try {
+        console.log(req.body);
+        const { route_id, start_airport_id, end_airport_id, distance_km, airplane_id, arrival_time, departure_time } = req.body;
+
+        const results = await db.query("UPDATE route SET start_airport_id = $1, end_airport_id = $2, distance_km = $3, airplane_id = $4, arrival_time = $5, departure_time = $6 WHERE id = $7 RETURNING *",
+        [start_airport_id, end_airport_id, distance_km, airplane_id, arrival_time, departure_time, route_id]);
+        res.status(200).json({
+            status: "success",
+            info: results.rows[0]
+        });
+    } catch (err){
+        res.status(201).json({
+            status: "failure"
+        });
+    }
+});
+//update airplane
+app.post('/api/v1/airline/updateairplane', async (req, res) => {
+    try {
+        console.log(req.body);
+        let days = [];
+        for(let i=0;i<req.body.days.length;i++)
+        {
+            days.push(req.body.days[i]);
+        }
+        console.log(days);
+        const {airplane_id, airline_id, airplanename, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, luggage_commercial} = req.body;
+        
+        console.log(airline_id, airplanename, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, luggage_commercial, days, airplane_id);
+
+        const results = await db.query(`
+            UPDATE airplane
+            SET airline_id = $1,
+                airplanename = $2,
+                business_seat = $3,
+                commercial_seat = $4,
+                cost_per_km_business = $5,
+                cost_per_km_commercial = $6,
+                day_rate = $7,
+                seat_rate = $8,
+                luggage_business = $9,
+	            luggage_commercial = $12,
+                days = ($10)
+            WHERE id = $11
+            RETURNING *`,
+            [airline_id, airplanename, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, days, airplane_id, luggage_commercial]);
+
+        res.status(200).json({
+            status: "success",
+            results: results.rows.length,
+            data: {
+                FlightForge: results.rows,
+            }
+        });
+    } catch (err) {
+        console.error("Error updating airplane:");
+        res.status(500).json({ status: "error", message: "Failed to update airplane." });
     }
 });
 
@@ -664,6 +877,31 @@ app.post("/api/v1/route/distanceandcost", async (req, res ) => {
         res.status(201).json({
             status: "failure"
         });
+    }
+});
+//add airplane
+app.post('/api/v1/airline/addairplane', authorize, async (req, res) => {
+    try {
+        //console.log(req.body);
+        const { airplanename, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, luggage_commercial, days } = req.body;
+
+        // Assuming air_scaling is defined somewhere
+        req.body.id = req.body.id / air_scaling;
+        //console.log(req.body.id, airplanename, days, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, luggage_commercial);
+
+        const results = await db.query("INSERT INTO airplane (airline_id, airplanename, days, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, luggage_commercial) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
+            [req.body.id, airplanename, days, business_seat, commercial_seat, cost_per_km_business, cost_per_km_commercial, day_rate, seat_rate, luggage_business, luggage_commercial]);
+
+        res.status(200).json({
+            status: "success",
+            results: results.rows.length,
+            data: {
+                FlightForge: results.rows
+            }
+        });
+    } catch (err) {
+        console.error("Error adding airplane:", err.message);
+        res.status(500).json({ status: "error", message: "Failed to add airplane" });
     }
 });
 

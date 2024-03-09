@@ -73,7 +73,24 @@ const CreateAccount = () => {
             console.error('Error creating account:', error);
             setError('Failed to create account. Please try again.');
         }
-    };    
+    };
+    
+    const getCurrentDate = () => {
+        const today = new Date();
+        let month = String(today.getMonth() + 1);
+        let day = String(today.getDate());
+        const year = String(today.getFullYear());
+    
+        // Add leading zero if month or day is less than 10
+        if (month.length < 2) {
+            month = '0' + month;
+        }
+        if (day.length < 2) {
+            day = '0' + day;
+        }
+    
+        return `${year}-${month}-${day}`;
+    };
 
     return (
         <div className="container mt-5">
@@ -95,9 +112,9 @@ const CreateAccount = () => {
                                     <input type="text" className="form-control" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                                 </div>
                                 <div className="form-group">
-                                    <label>Date of Birth:</label>
-                                    <input type="date" className="form-control" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required />
-                                </div>
+    <label>Date of Birth:</label>
+    <input type="date" className="form-control" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} max={getCurrentDate()} required />
+</div>
                                 <div className="form-group">
                                     <label>Email:</label>
                                     <input type="text" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />

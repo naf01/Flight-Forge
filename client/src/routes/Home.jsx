@@ -48,7 +48,9 @@ const Home = () => {
                 <div className="row mt-3">
                     <div className="col">
                         <p>
-                            <Link to="/airline/signin" className="text-primary" >Wanna be an airline company?</Link>
+                            <Link to="/airline/signin" className="text-primary" style={{marginRight: '10px', marginBottom: '30px'}} >An airline company?</Link>
+                            <p>or</p>
+                            <Link to="/airline/signin" className="text-primary" >Admin?</Link>
                         </p>
                     </div>
                 </div>

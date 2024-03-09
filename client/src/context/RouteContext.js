@@ -6,13 +6,15 @@ export const RouteContextProvider = (props) => {
     const [transitInfo, setTransitInfo] = useState([]);
     const [selectedTransit, setSelectedTransit] = useState(null);
     const [clicked, setclicked] = useState("");
+    const [airplane, setAirplane] = useState([]);
+    const [airplane_id, setAirplane_id] = useState(null);
 
     const addRoute = (route) => {
         setTransitInfo([...transitInfo, route]);
     };
 
     return (
-        <RouteContext.Provider value={{ transitInfo, setTransitInfo, selectedTransit, setSelectedTransit, clicked, setclicked }}>
+        <RouteContext.Provider value={{ transitInfo, setTransitInfo, selectedTransit, setSelectedTransit, clicked, setclicked, airplane, setAirplane, airplane_id, setAirplane_id }}>
             {props.children}
         </RouteContext.Provider>
     );

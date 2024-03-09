@@ -23,7 +23,7 @@ const AirlineSignIn = () => {
                 const token = response.data.data.token;
                 console.log(response);
                 localStorage.setItem('token', token);
-                navigate("/");
+                navigate("/airline/profile");
             } else {
                 setError('Invalid credentials. Please try again.');
             }
@@ -33,7 +33,7 @@ const AirlineSignIn = () => {
         }
     };
     return (
-        <div className="container">
+        <div className="container2">
           <form className="wrapper" onSubmit={handleSignIn}>
             <h1>Airline Login</h1>
             <div className="input-box">

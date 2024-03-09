@@ -357,6 +357,7 @@ const SearchRoute = () => {
                 {startSuggestedAirports.map((airport) => {
                   // Split the address string by comma and get the first part (city)
                   const city = (airport.address.split(',')[0].trim()).split('(')[1].trim();
+                  const country = (airport.address.split(',')[1].trim());
 
                   return (
                     <option 
@@ -380,7 +381,7 @@ const SearchRoute = () => {
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#e0e0e0'} // Change background color on hover
                         onMouseLeave={(e) => e.target.style.backgroundColor = '#f2f2f2'} // Reset background color on hover out
                       >
-                        {airport.name}, {city}
+                        {airport.name}, {city}, {country}
                       </span>
                     </option>
                   );

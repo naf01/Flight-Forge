@@ -5,11 +5,25 @@ import defaultprofileimage from '../assets/tlogo.png';
 import backgroundImage from '../assets/cover.png';
 
 const UserProfile = () => {
+    const [formData, setFormData] = useState({
+        userId: '',
+        firstName: '',
+        lastName: '',
+        mobileNo: '',
+        country: '',
+        city: ''
+    });
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const navigate = useNavigate();
     let [profilePhoto, setProfilePhoto] = useState(defaultprofileimage);
+    const [updateprofile, setUpdateProfile] = useState(false);
+    const [ updatePassword, setUpdatePassword] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -58,7 +72,8 @@ const UserProfile = () => {
             }
             setUserData(response.data.data.user);
         } catch (error) {
-            console.error('Error fetching user data:');
+            localStorage.removeItem('token');
+            navigate('/signin');
             setError('Failed to fetch user data. Please try again.');
         }
     };
@@ -71,6 +86,65 @@ const UserProfile = () => {
 
     const handleTicket = () => {
         navigate('/userticket');
+    };
+
+    const handleprofileupdate = async (e) => {
+        e.preventDefault();
+
+        try {
+            // Prepare the data to be sent to the backend
+            const userData = {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                mobileNo: formData.mobileNo,
+                country: formData.country,
+                city: formData.city,
+                token: localStorage.getItem('token'),
+                id: 0
+            };
+            console.log(userData);
+            const response = await RouteFinder.post('/user/profileupdate', userData);
+            window.location.reload()
+        } catch (error) {
+            navigate('/signin');
+        }
+    };
+
+    const handlePasswordUpdate = async (e) => {
+        e.preventDefault();
+
+        try {
+            if(formData.confirmPassword !== formData.newPassword)
+            {
+                alert("Password and Confirm Password does not match");
+                return;
+            }
+            // Prepare the data to be sent to the backend
+            const userData = {
+                oldPassword: formData.oldPassword,
+                newPassword: formData.newPassword,
+                confirmPassword: formData.confirmPassword,
+                token: localStorage.getItem('token'),
+                id: 0
+            };
+            const response = await RouteFinder.post('/user/passwordupdate', userData);
+            localStorage.setItem('token', response.data.token);
+        } catch (error) {
+            navigate('/signin');
+        }
+    };
+
+    const calculateAge = (dateOfBirth) => {
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const month = today.getMonth() - birthDate.getMonth();
+
+        if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        return age;
     };
 
     return (
@@ -126,6 +200,74 @@ const UserProfile = () => {
                 </div>
                 <div className="row justify-content-center">
                     <div className="col-md-9">
+                        <button className='btn btn-danger' style={{marginBottom: '10px', marginRight: '10px'}} onClick={e => {
+                            setUpdateProfile(!updateprofile);
+                            if(updateprofile)
+                            {
+                                setUpdatePassword(false);
+                            }
+                        }}>update profile</button>
+                        <button className='btn btn-danger' style={{marginBottom: '10px', marginRight: '10px'}} onClick={e => {
+                            setUpdatePassword(!updatePassword);
+                            if(updatePassword)
+                            {
+                                setUpdateProfile(false);
+                            }
+                        }}>update password</button>
+                        {updatePassword ? (
+    <div>
+        <form onSubmit={handlePasswordUpdate}>
+            <div className="form-group">
+                <label>Old Password:</label>
+                <input type="password" className="form-control" name="oldPassword" value={formData.oldPassword} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+                <label>New Password:</label>
+                <input type="password" className="form-control" name="newPassword" value={formData.newPassword} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+                <label>Confirm Password:</label>
+                <input type="password" className="form-control" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required />
+            </div>
+            <button type="submit" className="btn btn-primary">Submit</button>
+            <button className="btn btn-secondary" onClick={() => setUpdatePassword(false)}>Cancel</button>
+        </form>
+    </div>
+) : (
+    <p></p>
+)}
+                        {updateprofile ? (
+    <div className="container">
+        <form ostyle={{ marginTop: '20px' }}>
+            <div className="form-group">
+                <label>First Name:</label>
+                <input type="text" className="form-control" name="firstName" value={formData.firstName} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+                <label>Last Name:</label>
+                <input type="text" className="form-control" name="lastName" value={formData.lastName} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+                <label>Mobile Number:</label>
+                <input type="text" className="form-control" name="mobileNo" value={formData.mobileNo} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+                <label>Country:</label>
+                <input type="text" className="form-control" name="country" value={formData.country} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+                <label>City:</label>
+                <input type="text" className="form-control" name="city" value={formData.city} onChange={handleChange} required />
+            </div>
+            <div className="btn-group" role="group" aria-label="Profile Update Buttons" style={{ marginTop: '20px' }}>
+                <button type="submit" className="btn btn-success" onClick={e => handleprofileupdate(e)} style={{marginRight: '10px', marginBottom: '30px'}}>Submit</button>
+                <button type="button" className="btn btn-danger" onClick={() => setUpdateProfile(false)} style={{marginRight: '10px', marginBottom: '30px'}}>Cancel</button>
+            </div>
+        </form>
+    </div>
+) : (
+    <p></p>
+)}
                         {userData ? (
                             <div>
                                 <div className="user-info-group shadow p-3 mb-5 bg-white rounded">
@@ -142,11 +284,11 @@ const UserProfile = () => {
                                             </tr>
                                             <tr>
                                                 <th>Date of Birth</th>
-                                                <td>{userData.dateofbirth}</td>
+                                                <td>{userData.dateofbirth.split('T')[0]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Age</th>
-                                                <td>{userData.age}</td>
+                                                <td>{calculateAge(userData.dateofbirth)}</td>
                                             </tr>
                                         </tbody>
                                     </table>
