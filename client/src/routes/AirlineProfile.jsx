@@ -9,7 +9,7 @@ const AirlineProfile = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const { airplane, setAirplane, airplane_id, setAirplane_id } = useContext(RouteContext);
+    const { airplane, setAirplane, airplane_id, setAirplane_id, review, setReview } = useContext(RouteContext);
 
     useEffect(() => {
         fetchAirlineInfo();
@@ -131,7 +131,9 @@ const AirlineProfile = () => {
         navigate('/airline/add-route');
     };
 
-    const handleAirplane = (plane) => {
+    const handleAirplane = (plane, x) => {
+        console.log('x', x);
+        //setReview(x);
         setAirplane(plane);
         setAirplane_id(airlineInfo.root.id);
         console.log(plane);
@@ -185,7 +187,10 @@ const AirlineProfile = () => {
                             <tbody>
                                 {airlineInfo.airplane.map((plane, index) => (
                                     <tr key={index}>
-                                        <td><button className='btn btn-warning btn-pill' onClick={e => handleAirplane(plane)}>{plane.airplanename}</button></td>
+                                        <td><button className='btn btn-warning btn-pill' onClick={e => {
+                                            handleAirplane(plane, airlineInfo.review[index]);
+                                            console.log(airlineInfo.review[index]);
+                                        }}>{plane.airplanename}</button></td>
                                         <td>{renderRatingStars(plane.rating)}</td>
                                     </tr>
                                 ))}

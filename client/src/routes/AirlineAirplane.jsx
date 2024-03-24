@@ -5,7 +5,7 @@ import RouteFinder from '../apis/RouteFinder';
 import { useNavigate } from 'react-router-dom';
 
 const AirlineAirplane = () => {
-  const { airplane, airplane_id } = useContext(RouteContext);
+  const { airplane, airplane_id, review, setReview } = useContext(RouteContext);
   const [editMode, setEditMode] = useState(false);
   const [editMode2, setEditMode2] = useState(false);
   const [addroute, setAddRoute] = useState(false);
@@ -26,9 +26,9 @@ const AirlineAirplane = () => {
   };
 
   useEffect(() => {
+    console.log('done? -> ', review);
     const fetchData = async () => {
       try {
-        console.log(airplane);
         const response = await RouteFinder.post('/user/authenticate', {
             token: localStorage.getItem('token')
         });

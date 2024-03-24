@@ -275,10 +275,14 @@ app.post("/api/v1/user/tickets", authorize, async (req, res) => {
             Ti.push(Tin);
             Tin = [];
         }
+        
+        console.log(Ti);
 
         if (results.rows.length === 0) {
             return res.status(404).json({ error: 'User not found or incorrect credentials.' });
         }
+
+        
 
         res.status(200).json({
             status: "success",
@@ -308,6 +312,10 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
             date.push(req.body.date[i]);
         }
 
+        console.log(route_id);
+        console.log(date);
+        console.log(master_user, seat_type, transaction_id, name, email, passportnumber, country, city, dateofbirth);
+
         let results = await db.query('select id from non_user where $1=fullname and $2=email', [name, email]);
         if(results.rows.length == 0) results = await db.query('insert into non_user (id, fullname, email, passportnumber, country, city, dateofbirth, master_user) values (1, $1, $2, $3, $4, $5, ($6::DATE), $7) returning id', [name, email, passportnumber, country, city, dateofbirth, master_user]);
         let non_user = results.rows[0].id;
@@ -316,11 +324,13 @@ app.post("/api/v1/user/buyticket", async (req, res) => {
         try {
             for(let i = 0; i < route_id.length; i++)
             {
-                console.log('hello -> ', route_id[i], date[i]);
+                console.log('hello -> ', route_id[i], master_user, transaction_id, date[i], seat_type, non_user);
                 results = await db.query("SELECT BUYTICKET($1, $2, $3, $4::DATE, $5, $6)", [route_id[i], master_user, transaction_id, date[i], seat_type, non_user]);
                 tickets.push(results.rows[0].buyticket);
+                console.log(results.rows);
             }   
         } catch (error) {
+            console.log('Error buying ticket:');
             for(let i = 0; i < tickets.length; i++)
             {
                 results = await db.query("DELETE FROM ticket WHERE id = $1", [tickets[i]]);
@@ -518,11 +528,7 @@ app.post("/api/v1/airline/info", authorize, async (req, res) => {
             let results1 = await db.query("select * from airplane where id = $1", [x[i]]);
             T.push(results1.rows[0]);
             let results2 = await db.query("select (select first_name || ' ' || last_name as fullname from app_user where id = user_id), message from review where airplane_id = $1", [x[i]]);
-            if(results2.rows.length != 0)
-            {
-                mes.push(results2.rows);
-                //console.log(results2.rows);
-            }
+            mes.push(results2.rows);
         }
         results1 = await db.query("select * from get_total_amount_by_date($1)", [req.body.id]);
         let y = 0;
@@ -552,9 +558,9 @@ app.post("/api/v1/airline/info", authorize, async (req, res) => {
 });
 //airline getting airplane info
 app.post("/api/v1/airline/airplaneinfo", async (req, res) => {
-    console.log('baaaler alu dhur', req.body.id);
     try {
-        let results2 = await db.query("select (select first_name || ' ' || last_name as fullname from app_user where id = user_id), message from review where airplane_id = $1", req.body.id);
+        console.log(req.body.id);
+        let results2 = await db.query("select (select (first_name || ' ' || last_name) as fullname from app_user where id = user_id), message from review where airplane_id = $1", req.body.id);
         console.log(results2.rows);
         res.status(200).json({
             status: "success",
@@ -796,7 +802,7 @@ app.post("/api/v1/transit", async (req, res) => {
                 results.rows[i].dates[j] = originalDate.toISOString();
             }
         }
-        //console.log(results.rows[0].dates);
+        console.log(results.rows[0]);
         res.status(200).json({
             status: "success",
             results: results.rows.length,

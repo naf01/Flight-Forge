@@ -51,8 +51,8 @@ const UserTicket = () => {
     useEffect(() => {
         setFilteredTickets(tickets.filter(transit => 
             isUpcoming ? 
-            new Date(transit[0].journeydate) >= new Date() :
-            new Date(transit[0].journeydate) < new Date()
+            new Date(transit[0]?.journeydate) >= new Date() :
+            new Date(transit[0]?.journeydate) < new Date()
         ));
     }, [tickets, isUpcoming]);
 
@@ -102,7 +102,7 @@ const UserTicket = () => {
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
-        setCurrentTickets([]);
+    setCurrentTickets([]);
     };
 
     const handleReturnTicket = async (ticket) => {
@@ -138,30 +138,30 @@ const UserTicket = () => {
                             <h5 className="card-title">User Info</h5>
                             <table className="table table-striped">
                                 <tbody>
-                                <tr>
+                                    <tr>
                                         <td>Fullname:</td>
-                                        <td>{transit[0].fullname}</td>
+                                        <td>{transit[0]?.fullname}</td>
                                     </tr>
                                     <tr>
                                         <td>Email:</td>
-                                        <td>{transit[0].email}</td>
+                                        <td>{transit[0]?.email}</td>
                                     </tr>
                                     <tr>
                                         <td>Date of Birth:</td>
-                                        <td>{formatDate(transit[0].dateofbirth.split('T')[0].trim())}</td>
+                                        <td>{transit[0]?.dateofbirth?.split('T')[0]?.trim()}</td>
                                     </tr>
                                     <tr>
                                         <td>Country:</td>
-                                        <td>{transit[0].country}</td>
+                                        <td>{transit[0]?.country}</td>
                                     </tr>
                                     <tr>
                                         <td>City:</td>
-                                        <td>{transit[0].city}</td>
+                                        <td>{transit[0]?.city}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
                                         <td>
-                                            {new Date(transit[0].journeydate) - new Date() > 1000 * 60 * 60 * 24 * 10 ? (
+                                            {new Date(transit[0]?.journeydate) - new Date() > 1000 * 60 * 60 * 24 * 10 ? (
                                                 <button className="btn btn-primary" onClick={() => handleReturnTicket(transit[0])}>Return Ticket</button>
                                             ) : (
                                                 <button className="btn btn-secondary" disabled>Return Ticket</button>
@@ -186,15 +186,15 @@ const UserTicket = () => {
                                 <tbody>
                                     {transit.map(ticket => (
                                         <tr key={ticket.ticket_id}>
-                                            <td>{ticket.journeydate.split('T')[0].trim()} , {ticket.journeydate.split('T')[1].split('.')[0].trim()}</td>
-                                            <td>{ticket.seatno}</td>
-                                            <td>{ticket.amount}</td>
-                                            <td>{ticket.passportnumber}</td>
-                                            <td>{ticket.buydate.split('T')[0].trim()} , {ticket.buydate.split('T')[1].split('.')[0].trim()}</td>
-                                            <td>{ticket.transactionid}</td>
+                                            <td>{ticket?.journeydate?.split('T')[0]?.trim()} , {ticket?.journeydate?.split('T')[1]?.split('.')[0]?.trim()}</td>
+                                            <td>{ticket?.seatno}</td>
+                                            <td>{ticket?.amount}</td>
+                                            <td>{ticket?.passportnumber}</td>
+                                            <td>{ticket?.buydate?.split('T')[0]?.trim()} , {ticket?.buydate?.split('T')[1]?.split('.')[0]?.trim()}</td>
+                                            <td>{ticket?.transactionid}</td>
                                             <td>
-                                                {new Date() - new Date(ticket.journeydate) > 1000 * 60 * 60 * 24 ? (
-                                                    <button className="btn btn-primary" onClick={() => handleReview(ticket.route_id)}>Give a review</button>
+                                                {new Date() - new Date(ticket?.journeydate) > 1000 * 60 * 60 * 24 ? (
+                                                    <button className="btn btn-primary" onClick={() => handleReview(ticket?.route_id)}>Give a review</button>
                                                 ) : (
                                                     <button className="btn btn-secondary" disabled>Take Our Flight First</button>
                                                 )}
@@ -251,8 +251,16 @@ const UserTicket = () => {
                 </div>
             </div>
             <div className="text-right">
-                <button onClick={() => setIsUpcoming(true)} className={`btn ${isUpcoming ? 'btn-primary' : 'btn-secondary'} mr-2`}>Upcoming</button>
-                <button onClick={() => setIsUpcoming(false)} className={`btn ${isUpcoming ? 'btn-secondary' : 'btn-primary'}`}>Ticket Archive</button>
+                <button onClick={() => {
+                    setIsUpcoming(true);
+                    setCurrentTickets([]);
+                    setCurrentPage(1);
+                }} className={`btn ${isUpcoming ? 'btn-primary' : 'btn-secondary'} mr-2`}>Upcoming</button>
+                <button onClick={() => {
+                    setIsUpcoming(false);
+                    setCurrentTickets([]);
+                    setCurrentPage(1);
+                }} className={`btn ${isUpcoming ? 'btn-secondary' : 'btn-primary'}`}>Ticket Archive</button>
             </div>
             {tickets.length > 0 ? (
                 <div>

@@ -142,7 +142,7 @@ const SearchRoute = () => {
         // Create the formatted date string in the format day/month/year
         const formattedDate = `${year}-${month}-${day}`;
         //console.log(formattedDate);
-
+        //console.log("checking -> ", start_airport_id, end_airport_id, formattedDate, ticketClass);
         const response = await RouteFinder.post('/transit', {
             start_airport_id: start_airport_id,
             end_airport_id: end_airport_id,
@@ -211,6 +211,8 @@ const SearchRoute = () => {
             }
         });
 
+        console.log('hello -> ', modifiedRoutes[0]);
+
         let seats_left = [], seat=0;
         let totaldistance = [], dist = 0.0;
         let totalcost = [], cost = 0;
@@ -226,7 +228,7 @@ const SearchRoute = () => {
             for(let j=0;j<modifiedRoutes[i].length;j++){
                 let response3 = await RouteFinder.post('/airplanerating', {airplane_id: modifiedAirplanesid[i][j]});
                 rating.push(response3.data.rating);
-                console.log(response3.data);
+                //console.log(response3.data);
               //console.log(modifiedRoutes[i][j], modifiedDates[i][j], ticketClass);
                 response3 = await RouteFinder.post('/route/seats', {
                     route_id: modifiedRoutes[i][j],
@@ -235,7 +237,7 @@ const SearchRoute = () => {
                 });
                 if(response3.data.seat < seat){
                     seat = response3.data.seat;
-                    console.log(response3.data);
+                    //console.log(response3.data);
                 }
                 if(response3.data.luggage < luggage){
                   luggage = response3.data.luggage;
@@ -246,7 +248,7 @@ const SearchRoute = () => {
                     date: modifiedDates[i][j],
                     seat_type: ticketClass
                 });
-                console.log(response3.data);
+               // console.log(response3.data);
                 if(response3.data.results)
                 {
                   if(!response3.data.cost) response3.data.cost = 0;
@@ -282,9 +284,14 @@ const SearchRoute = () => {
 
         const Ti = [];
 
-        for(let i=0;i<modifiedTransit.length;i++){
+        let x = 30;
+        if(modifiedTransit.length <= 10) x = modifiedTransit.length;
+
+        for(let i=0;i<x;i++){
+            if(i==0) console.log('checked -> ', seats_left[i], travelerCount);
             if(seats_left[i] >= travelerCount) Ti.push(new TransitInfo(modifiedTransit[i], modifiedDates[i], modifiedAirports[i], modifiedRoutes[i], modifiedAirplanesid[i], modifiedAirplanesname[i], seats_left[i], totaldistance[i], totalcost[i], luggae_hold[i], ticketClass, costlist[i], ratinglist[i]));
         }
+
         console.log(Ti);
 
         setTransitInfo(Ti);

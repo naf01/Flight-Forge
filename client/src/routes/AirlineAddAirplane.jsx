@@ -51,6 +51,7 @@ const AirlineAddAirplane = () => {
         navigate('/airline/profile');
       }
     } catch (error) {
+      navigate('/');
       console.log('error')
     }
     console.log(editedAirplane);
