@@ -1,4 +1,4 @@
-# ✈️ Flight-Forge - Full-Stack Flight Management System  
+# ✈️ Flight-Forge - Flight Management System  
 
 ## 📌 Overview  
 **Flight-Forge** is a **full-stack flight management system** built using the **PERN stack**:  
