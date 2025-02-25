@@ -7,7 +7,7 @@
 ✅ **React.js** (Frontend UI for seamless user experience)  
 ✅ **Node.js** (Server-side execution & API integration)  
 
-This project allows **users to search, book, and manage flight tickets** while handling **route transit tracking**. The system provides a **secure authentication mechanism, advanced database management, and real-time logging** for monitoring function calls.  
+This project allows **users to search, book, and manage flight tickets** while handling ***route transit tracking***. The system provides a **secure authentication mechanism, advanced database management, and real-time logging** for monitoring function calls.  
 
 ---
 
